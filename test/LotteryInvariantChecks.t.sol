@@ -11,14 +11,13 @@ contract LotteryInvariantChecksTest is LotteryTestBase {
         uint256[] memory inflationRates = new uint256[](2);
         inflationRates[0] = 100_000;
         inflationRates[1] = 50_000;
-        LotteryToken _lotteryToken = new LotteryToken(inflationRates);
 
         uint256[] memory percRewardsToPlayers = new uint256[](3);
         percRewardsToPlayers[0] = 6250;
         percRewardsToPlayers[1] = 5000;
         percRewardsToPlayers[2] = 0;
 
-        super.setUp(new TestToken(), _lotteryToken, percRewardsToPlayers);
+        super.setUp(new TestToken(), inflationRates, percRewardsToPlayers);
     }
 
     function invariantSufficientFunds() public view {

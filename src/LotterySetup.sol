@@ -4,15 +4,16 @@ pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "src/LotteryToken.sol";
 import "src/interfaces/ILotterySetup.sol";
 import "src/Ticket.sol";
-import "src/LotteryMath.sol";
 
 contract LotterySetup is ILotterySetup {
     uint256 public immutable override minInitialPot;
     uint256 public immutable override jackpotBound;
 
     IERC20 public immutable override rewardToken;
+    IERC20 public immutable override nativeToken;
 
     uint256 public immutable override ticketPrice;
 
@@ -69,6 +70,7 @@ contract LotterySetup is ILotterySetup {
             revert InitialPotPeriodTooShort();
         }
 
+        nativeToken = new LotteryToken();
         uint256 tokenUnit = 10 ** IERC20Metadata(address(lotterySetupParams.token)).decimals();
         minInitialPot = 4 * tokenUnit;
         jackpotBound = 5_000_000 * tokenUnit;
@@ -91,7 +93,7 @@ contract LotterySetup is ILotterySetup {
             lotterySetupParams.selectionMax,
             lotterySetupParams.expectedPayout,
             lotterySetupParams.fixedRewards
-            );
+        );
     }
 
     modifier requireJackpotInitialized() {

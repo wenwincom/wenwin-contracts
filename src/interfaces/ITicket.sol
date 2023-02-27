@@ -4,9 +4,6 @@ pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-/// @dev in case of unauthorized caller tries to mint Ticket
-error UnauthorizedMint();
-
 /// @dev Interface representing Ticket NTF.
 /// Ticket NFT represents ownership of the lottery ticket.
 interface ITicket is IERC721 {

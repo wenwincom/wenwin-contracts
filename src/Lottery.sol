@@ -3,7 +3,7 @@
 pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "src/interfaces/ILottery.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "src/ReferralSystem.sol";
 import "src/RNSourceController.sol";
 import "src/staking/Staking.sol";
@@ -38,6 +38,8 @@ contract Lottery is ILottery, Ticket, LotterySetup, ReferralSystem, RNSourceCont
 
     mapping(uint128 => uint256) public override ticketsSold;
     int256 public override currentNetProfit;
+
+    uint256[] private inflationRatesPerDraw;
 
     /// @dev Checks if ticket is a valid ticket, and reverts if invalid
     /// @param ticket Ticket being checked
@@ -74,33 +76,37 @@ contract Lottery is ILottery, Ticket, LotterySetup, ReferralSystem, RNSourceCont
     }
 
     /// @dev Constructs a new lottery contract.
-    /// @param lotterySetupParams Setup parameter for the lottery
-    /// @param lotteryToken Lottery native token address.
+    /// @param lotterySetupParams Setup parameter for the lottery.
+    /// @param _inflationRatesPerDraw The inflation rates of native token per draw for each year.
     /// @param percentageRewardsToPlayers Percentage of native token rewards going to players.
     /// @param maxRNFailedAttempts Maximum number of consecutive failed attempts for random number source.
     /// @param maxRNRequestDelay Time considered as maximum delay for RN request.
     // solhint-disable-next-line code-complexity
     constructor(
         LotterySetupParams memory lotterySetupParams,
-        ILotteryToken lotteryToken,
+        uint256[] memory _inflationRatesPerDraw,
         uint256[] memory percentageRewardsToPlayers,
         uint256 maxRNFailedAttempts,
         uint256 maxRNRequestDelay
     )
         Ticket()
         LotterySetup(lotterySetupParams)
-        ReferralSystem(lotteryToken, percentageRewardsToPlayers)
+        ReferralSystem(percentageRewardsToPlayers)
         RNSourceController(maxRNFailedAttempts, maxRNRequestDelay)
     {
+        inflationRatesPerDraw = _inflationRatesPerDraw;
+
         stakingRewardRecipient = address(
             new Staking(
             this,
             lotterySetupParams.token,
-            lotteryToken,
+            nativeToken,
             "Staked LOT",
             "stLOT"
             )
         );
+
+        nativeToken.safeTransfer(msg.sender, ILotteryToken(address(nativeToken)).INITIAL_SUPPLY());
     }
 
     function buyTickets(
@@ -222,7 +228,11 @@ contract Lottery is ILottery, Ticket, LotterySetup, ReferralSystem, RNSourceCont
 
         uint256 ticketsSoldForDraw = nextTicketId - lastDrawFinalTicketId;
         lastDrawFinalTicketId = nextTicketId;
-        referralDrawFinalize(drawFinalized, ticketsSoldForDraw);
+        referralDrawFinalize(
+            drawFinalized,
+            ticketsSoldForDraw,
+            inflationRatesPerDraw[Math.min(drawFinalized, inflationRatesPerDraw.length - 1)]
+        );
 
         emit FinishedExecutingDraw(drawFinalized, randomNumber, _winningTicket);
     }
@@ -276,5 +286,9 @@ contract Lottery is ILottery, Ticket, LotterySetup, ReferralSystem, RNSourceCont
         if (drawId >= currentDraw) {
             revert DrawNotFinished(drawId);
         }
+    }
+
+    function mintNativeTokens(address mintTo, uint256 amount) internal override {
+        ILotteryToken(address(nativeToken)).mint(mintTo, amount);
     }
 }

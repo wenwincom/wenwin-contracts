@@ -2,14 +2,11 @@
 // slither-disable-next-line solc-version
 pragma solidity 0.8.17;
 
-import "src/interfaces/ILotteryToken.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "src/interfaces/IReferralSystem.sol";
-import "src/LotteryMath.sol";
 
 abstract contract ReferralSystem is IReferralSystem {
     uint256 internal constant PERCENTAGE_BASE = 10_000;
-
-    ILotteryToken public immutable override lotteryToken;
 
     uint256[] public override percentageRewardsToPlayers;
 
@@ -23,10 +20,7 @@ abstract contract ReferralSystem is IReferralSystem {
 
     mapping(uint128 => uint256) public override minimumEligibleReferrals;
 
-    constructor(ILotteryToken _lotteryToken, uint256[] memory _percentageRewardsToPlayers) {
-        if (address(_lotteryToken) == address(0)) {
-            revert LotteryTokenIsZeroAddress();
-        }
+    constructor(uint256[] memory _percentageRewardsToPlayers) {
         uint256 percentageRewardsToPlayersLength = _percentageRewardsToPlayers.length;
 
         if (percentageRewardsToPlayersLength == 0) {
@@ -39,7 +33,6 @@ abstract contract ReferralSystem is IReferralSystem {
             }
         }
 
-        lotteryToken = _lotteryToken;
         percentageRewardsToPlayers = _percentageRewardsToPlayers;
     }
 
@@ -70,28 +63,35 @@ abstract contract ReferralSystem is IReferralSystem {
         unclaimedTickets[currentDraw][player].playerTicketCount += uint128(numberOfTickets);
     }
 
+    function mintNativeTokens(address mintTo, uint256 amount) internal virtual;
+
     function claimReferralReward(uint128[] memory drawIds) external override returns (uint256 claimedReward) {
         for (uint256 counter = 0; counter < drawIds.length; ++counter) {
             claimedReward += claimPerDraw(drawIds[counter]);
         }
 
-        lotteryToken.mint(msg.sender, claimedReward);
+        mintNativeTokens(msg.sender, claimedReward);
     }
 
     /// @dev Draw is being finalized, does the rewards calculations for the draw
     /// @param drawFinalized Draw being finalized
     /// @param ticketsSoldDuringDraw Number of tickets sold during the draw that is finalized
-    function referralDrawFinalize(uint128 drawFinalized, uint256 ticketsSoldDuringDraw) internal {
+    function referralDrawFinalize(
+        uint128 drawFinalized,
+        uint256 ticketsSoldDuringDraw,
+        uint256 mintableNativeTokens
+    )
+        internal
+    {
         // if no tickets sold there is no incentives, so no rewards to be set
         if (ticketsSoldDuringDraw == 0) {
             return;
         }
-        uint256 mintableAmount = lotteryToken.checkMintableAndIncreaseNextDraw();
 
-        uint256 indexForDraw = LotteryMath.inflationRateIndexForDraw(drawFinalized, percentageRewardsToPlayers.length);
-        uint256 percentageRewardToPlayers = percentageRewardsToPlayers[indexForDraw];
-        uint256 playerRewardForDraw = mintableAmount * percentageRewardToPlayers / PERCENTAGE_BASE;
-        uint256 referrerRewardForDraw = mintableAmount - playerRewardForDraw;
+        uint256 percentageRewardToPlayers =
+            percentageRewardsToPlayers[Math.min(drawFinalized, percentageRewardsToPlayers.length - 1)];
+        uint256 playerRewardForDraw = mintableNativeTokens * percentageRewardToPlayers / PERCENTAGE_BASE;
+        uint256 referrerRewardForDraw = mintableNativeTokens - playerRewardForDraw;
 
         uint256 totalTicketsForReferrersPerCurrentDraw = totalTicketsForReferrersPerDraw[drawFinalized];
         if (totalTicketsForReferrersPerCurrentDraw > 0) {

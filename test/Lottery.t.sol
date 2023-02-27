@@ -10,17 +10,23 @@ contract LotteryTest is LotteryTestBase {
     address public constant USER = address(123);
 
     function setUp() public {
-        uint256[] memory inflationRates = new uint256[](2);
-        inflationRates[0] = 100_000;
-        inflationRates[1] = 50_000;
-        LotteryToken _lotteryToken = new LotteryToken(inflationRates);
+        uint256[] memory inflationRates = new uint256[](53);
+        for (uint256 i = 0; i < 52; i++) {
+            inflationRates[i] = 100_000;
+        }
+        inflationRates[52] = 50_000;
 
-        uint256[] memory perRewardsToPlayers = new uint256[](3);
-        perRewardsToPlayers[0] = 6250;
-        perRewardsToPlayers[1] = 5000;
-        perRewardsToPlayers[2] = 0;
+        uint256[] memory percentageRewardsToPlayers = new uint256[](105);
+        percentageRewardsToPlayers[0] = 6250;
+        percentageRewardsToPlayers[52] = 5000;
+        percentageRewardsToPlayers[104] = 0;
+        for (uint256 i = 1; i < 104; i++) {
+            if (i % 52 != 0) {
+                percentageRewardsToPlayers[i] = percentageRewardsToPlayers[i - 1];
+            }
+        }
 
-        super.setUp(new TestToken(), _lotteryToken, perRewardsToPlayers);
+        super.setUp(new TestToken(), inflationRates, percentageRewardsToPlayers);
     }
 
     function testFinalizeInitialPot(uint256 timestamp, uint256 initialSize) public {
@@ -35,7 +41,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -80,7 +86,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -333,7 +339,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -350,7 +356,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -367,7 +373,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -384,7 +390,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -401,7 +407,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -418,7 +424,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -435,7 +441,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -452,7 +458,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -469,7 +475,7 @@ contract LotteryTest is LotteryTestBase {
                 TICKET_PRICE / 250,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -486,24 +492,7 @@ contract LotteryTest is LotteryTestBase {
                 TICKET_PRICE,
                 fixedRewards
             ),
-            lotteryToken,
-            percentageRewardsToPlayers,
-            MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
-        );
-
-        vm.expectRevert(LotteryTokenIsZeroAddress.selector);
-        new Lottery(
-            LotterySetupParams(
-                rewardToken,
-                drawSchedule,
-                TICKET_PRICE,
-                SELECTION_SIZE,
-                SELECTION_MAX,
-                EXPECTED_PAYOUT,
-                fixedRewards
-            ),
-            ILotteryToken(address(0)),
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -520,7 +509,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             new uint256[](0),
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -539,7 +528,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             wrongPercent,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -556,7 +545,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 new uint256[](1)
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -575,7 +564,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 invalidFixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
@@ -594,7 +583,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 invalidFixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY

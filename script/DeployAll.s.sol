@@ -17,14 +17,14 @@ contract DeployAllScript is Script, LotteryConfig, ReferralSystemConfig, RewardT
         vm.startBroadcast(deployerPrivateKey);
 
         IERC20 token = getRewardToken();
-        (ILotteryToken lotteryToken, uint256[] memory percRewardsToPlayers) = getLotteryTokenAndRewardsPerc();
-        Lottery lottery = getLottery(token, lotteryToken, percRewardsToPlayers);
+        (uint256[] memory inflationRatesPerDraw, uint256[] memory percRewardsToPlayers) = getLotteryRewardsData();
+        Lottery lottery = getLottery(token, inflationRatesPerDraw, percRewardsToPlayers);
 
         lottery.initSource(getRNSource(address(lottery)));
 
         vm.stopBroadcast();
 
         console.log("Lottery deployed at", address(lottery));
-        console.log("Lottery token deployed at", address(lotteryToken));
+        console.log("Lottery token deployed at", address(lottery.nativeToken()));
     }
 }
