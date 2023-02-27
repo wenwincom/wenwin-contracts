@@ -1,0 +1,32 @@
+name: Lottery Draw
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+
+env:
+  PRIVATE_KEY: ${{ vars.PRIVATE_KEY }}
+  GOERLI_RPC_URL: ${{ vars.GOERLI_RPC_URL }}
+  POLYGONSCAN_API_KEY: ${{ vars.POLYGONSCAN_API_KEY }}
+  ETHERSCAN_API_KEY: ${{ vars.ETHERSCAN_API_KEY }}
+  LOTTERY_ADDRESS: "0x40cD8F47bC39263e9b445FC0cF11AFfEFD82d039"
+  REWARD_TOKEN_ADDRESS: "0x9BcbFD8192e4e5075EaEc734E35fB3A5A6ed630c"
+  RNSOURCE_ADDRESS: "0x199aAd1210F8431068Af3Bd6366Cfbc529D8205F"
+  FILL_WITH_DATA_OPTION: "4"
+  NETWORK: "goerli"
+
+jobs:
+  draw:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: "Execute draw"
+        run: ". ./script/sh/fillWithData.sh $NETWORK -vvvv"
