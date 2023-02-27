@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 // slither-disable-next-line solc-version
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 interface IRNSource {
     /// @dev Non existent request, this should never happen as it means the underlying source
