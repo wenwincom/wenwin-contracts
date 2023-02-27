@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 // slither-disable-next-line solc-version
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 /// @dev The number for a minimum ticket sold is greater than the number for a maximum ticket sold for the same index
 error MinimumTicketsSoldNotGreaterThanPrevious();
