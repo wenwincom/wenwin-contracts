@@ -17,9 +17,9 @@ contract LotteryScript is Script, LotteryConfig, ReferralSystemConfig {
         vm.broadcast(deployerPrivateKey);
 
         IERC20 token = IERC20(vm.envAddress("REWARD_TOKEN_ADDRESS"));
-        (ILotteryToken lotteryToken, uint256[] memory percRewardsToPlayers) = getLotteryTokenAndRewardsPerc();
+        (uint256[] memory inflationRatesPerDraw, uint256[] memory percRewardsToPlayers) = getLotteryRewardsData();
 
-        getLottery(token, lotteryToken, percRewardsToPlayers);
+        getLottery(token, inflationRatesPerDraw, percRewardsToPlayers);
 
         vm.stopBroadcast();
     }

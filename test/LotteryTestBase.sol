@@ -21,9 +21,9 @@ abstract contract LotteryTestBase is Test {
     uint256 public constant EXPECTED_PAYOUT = 38e16;
     address public constant FRONTEND_ADDRESS = address(444);
 
-    LotteryToken public lotteryToken;
-    uint256 public lotteryTokenInitialTime;
+    ILotteryToken public lotteryToken;
     uint256[] public percentageRewardsToPlayers;
+    uint256[] public inflationRates;
     address public randomNumberSource = address(1_234_567_890);
 
     uint256[] public fixedRewards;
@@ -33,7 +33,7 @@ abstract contract LotteryTestBase is Test {
 
     function setUp(
         TestToken _rewardToken,
-        LotteryToken _lotteryToken,
+        uint256[] memory _inflationRates,
         uint256[] memory _percRewardsToPlayers
     )
         internal
@@ -41,9 +41,8 @@ abstract contract LotteryTestBase is Test {
         firstDrawAt = block.timestamp + 3 * PERIOD;
         rewardToken = _rewardToken;
 
-        lotteryTokenInitialTime = block.timestamp;
-        lotteryToken = _lotteryToken;
         percentageRewardsToPlayers = _percRewardsToPlayers;
+        inflationRates = _inflationRates;
 
         fixedRewards = new uint256[](SELECTION_SIZE);
         fixedRewards[1] = TICKET_PRICE;
@@ -60,18 +59,18 @@ abstract contract LotteryTestBase is Test {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            _lotteryToken,
+            _inflationRates,
             _percRewardsToPlayers,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
+        lotteryToken = ILotteryToken(address(lottery.nativeToken()));
+
         rewardToken.mint(1e24);
         rewardToken.transfer(address(lottery), 1e24);
         vm.warp(lottery.initialPotDeadline() + 1);
         lottery.finalizeInitialPotRaise();
         lottery.initSource(IRNSource(randomNumberSource));
-
-        lotteryToken.transferOwnership(address(lottery));
 
         vm.mockCall(randomNumberSource, abi.encodeWithSelector(IRNSource.requestRandomNumber.selector), abi.encode(0));
     }

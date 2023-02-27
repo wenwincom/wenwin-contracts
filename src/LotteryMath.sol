@@ -2,7 +2,6 @@
 // slither-disable-next-line solc-version
 pragma solidity 0.8.17;
 
-import "@openzeppelin/contracts/utils/math/Math.sol";
 import "src/interfaces/ILottery.sol";
 
 /// @dev Implementation of lottery jackpot and fees calculations
@@ -126,13 +125,5 @@ library LotteryMath {
     {
         uint256 rewardPercentage = (rewardType == LotteryRewardType.FRONTEND) ? FRONTEND_REWARD : STAKING_REWARD;
         dueRewards = (ticketsSold * ticketPrice * rewardPercentage) / PERCENTAGE_BASE;
-    }
-
-    /// @dev Returns inflation rate index for particular draw
-    /// @param drawId Unique identifier for the draw
-    /// @param inflationLen Length of the defined inflation rates
-    /// @return Index to be used from defined inflation array
-    function inflationRateIndexForDraw(uint128 drawId, uint256 inflationLen) internal pure returns (uint256) {
-        return Math.min(uint256(drawId / DRAWS_PER_YEAR), inflationLen - 1);
     }
 }

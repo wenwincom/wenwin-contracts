@@ -27,8 +27,7 @@ contract LotteryEchidna {
     RNSourceEchidna internal rnSource;
     Lottery internal lottery;
 
-    LotteryToken internal lotteryToken;
-    uint256 internal lotteryTokenInitialTime;
+    ILotteryToken internal lotteryToken;
     uint256[] internal inflationRates;
     uint256[] internal percentageRewardsToPlayers;
     uint256[] internal fixedRewards;
@@ -51,9 +50,6 @@ contract LotteryEchidna {
         inflationRates[0] = 100_000;
         inflationRates[1] = 50_000;
 
-        lotteryTokenInitialTime = block.timestamp;
-        lotteryToken = new LotteryToken(inflationRates);
-
         fixedRewards = new uint256[](SELECTION_SIZE);
         fixedRewards[1] = TICKET_PRICE;
         fixedRewards[2] = 2 * TICKET_PRICE;
@@ -69,11 +65,12 @@ contract LotteryEchidna {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            lotteryToken,
+            inflationRates,
             percentageRewardsToPlayers,
             MAX_FAILED_ATTEMPTS,
             MAX_REQUEST_DELAY
         );
+        lotteryToken = ILotteryToken(address(lottery.nativeToken()));
 
         rnSource = new RNSourceEchidna(address(lottery));
         lottery.initSource(rnSource);
@@ -83,8 +80,6 @@ contract LotteryEchidna {
         rewardTokenLotteryBalance = 1e24; // solhint-disable-line reentrancy
         Hevm(HEVM_ADDRESS).warp(lottery.initialPotDeadline() + 1);
         lottery.finalizeInitialPotRaise();
-
-        lotteryToken.transferOwnership(address(lottery));
     }
 
     function buyTicket(uint120 ticketCombination, address frontend, address referrer) public virtual {

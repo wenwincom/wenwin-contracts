@@ -17,36 +17,25 @@ contract LotteryTokenTest is Test {
 
     function setUp() public {
         vm.prank(OWNER);
-        uint256[] memory inflationRates = new uint256[](3);
-        inflationRates[0] = FIRST_YEAR_INFLATION_PER_DRAW;
-        inflationRates[1] = SECOND_YEAR_INFLATION_PER_DRAW;
-        inflationRates[2] = THIRD_YEAR_INFLATION_PER_DRAW;
-        lotteryToken = new LotteryToken(inflationRates);
+        lotteryToken = new LotteryToken();
     }
 
-    function testInflation() public {
+    function testInflation(uint256 amount) public {
+        amount = bound(amount, 1, 1e30);
+
         uint256 initialSupply = lotteryToken.INITIAL_SUPPLY();
-        uint256 supply = initialSupply;
-        assertEq(lotteryToken.totalSupply(), supply);
+        assertEq(lotteryToken.totalSupply(), initialSupply);
 
-        vm.startPrank(OWNER);
-        for (uint256 i = 0; i < (5 * 52); i++) {
-            lotteryToken.mint(MINT_TO, lotteryToken.checkMintableAndIncreaseNextDraw());
-            supply += (
-                (i < 52)
-                    ? FIRST_YEAR_INFLATION_PER_DRAW
-                    : ((i < 104) ? SECOND_YEAR_INFLATION_PER_DRAW : THIRD_YEAR_INFLATION_PER_DRAW)
-            );
+        vm.prank(OWNER);
+        lotteryToken.mint(MINT_TO, amount);
 
-            assertEq(lotteryToken.totalSupply(), supply);
-            assertEq(lotteryToken.balanceOf(MINT_TO), (supply - initialSupply));
-        }
-        vm.stopPrank();
+        assertEq(lotteryToken.totalSupply(), initialSupply + amount);
+        assertEq(lotteryToken.balanceOf(MINT_TO), (lotteryToken.totalSupply() - initialSupply));
     }
 
     function testUnauthorizedMinting() public {
         vm.prank(address(0x222));
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(UnauthorizedMint.selector);
         lotteryToken.mint(MINT_TO, 1);
     }
 }

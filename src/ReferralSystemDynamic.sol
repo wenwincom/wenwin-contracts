@@ -9,11 +9,10 @@ abstract contract ReferralSystemDynamic is IReferralSystemDynamic, ReferralSyste
     MinimumReferralsRequirement[] public override referralRequirements;
 
     constructor(
-        ILotteryToken _lotteryToken,
         uint256[] memory _percentageRewardsToPlayers,
         MinimumReferralsRequirement[] memory _referralRequirements
     )
-        ReferralSystem(_lotteryToken, _percentageRewardsToPlayers)
+        ReferralSystem(_percentageRewardsToPlayers)
     {
         if (_referralRequirements[0].minimumTicketsSold > 0) {
             revert MinimumTicketsSoldAtFirstIndexNotZero();

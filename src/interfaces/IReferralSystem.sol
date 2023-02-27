@@ -37,9 +37,6 @@ interface IReferralSystem {
         uint128 indexed drawId, uint256 indexed referrerRewardForDraw, uint256 indexed playerRewardForDraw
     );
 
-    /// @dev The address for the lottery token
-    function lotteryToken() external view returns (ILotteryToken);
-
     /// @dev The setup for the percentage rewards for players per year
     function percentageRewardsToPlayers(uint256 index) external view returns (uint256);
 

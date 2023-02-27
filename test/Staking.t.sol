@@ -10,22 +10,22 @@ contract StakingTest is LotteryTestBase {
     IStaking public staking;
     address public constant STAKER = address(69);
 
-    LotteryToken public stakingToken;
+    ILotteryToken public stakingToken;
 
     function setUp() public {
         TestToken _rewardToken = new TestToken();
         uint256[] memory inflationRates = new uint256[](2);
         inflationRates[0] = 100_000;
         inflationRates[1] = 50_000;
-        stakingToken = new LotteryToken(inflationRates);
 
         uint256[] memory percRewardsToPlayers = new uint256[](3);
         percRewardsToPlayers[0] = 6250;
         percRewardsToPlayers[1] = 5000;
         percRewardsToPlayers[2] = 0;
 
-        super.setUp(_rewardToken, stakingToken, percRewardsToPlayers);
+        super.setUp(_rewardToken, inflationRates, percRewardsToPlayers);
         staking = IStaking(lottery.stakingRewardRecipient());
+        stakingToken = ILotteryToken(address(lottery.nativeToken()));
     }
 
     function testGetRewardsSingleStaker() public {

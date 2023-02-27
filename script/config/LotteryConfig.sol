@@ -10,7 +10,7 @@ import "src/Lottery.sol";
 contract LotteryConfig is Script {
     function getLottery(
         IERC20 rewardToken,
-        ILotteryToken lotteryToken,
+        uint256[] memory inflationPerDraw,
         uint256[] memory percentageRewardsToPlayers
     )
         internal
@@ -33,7 +33,7 @@ contract LotteryConfig is Script {
                 uint256(vm.envUint("LOTTERY_EXPECTED_PAYOUT")),
                 fixedRewards
             ),
-            lotteryToken,
+            inflationPerDraw,
             percentageRewardsToPlayers,
             vm.envUint("SOURCE_MAX_FAILED_ATTEMPTS"),
             vm.envUint("SOURCE_MAX_REQUEST_DELAY")
