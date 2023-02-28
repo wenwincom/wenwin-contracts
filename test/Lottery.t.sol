@@ -9,26 +9,6 @@ import "test/TestHelpers.sol";
 contract LotteryTest is LotteryTestBase {
     address public constant USER = address(123);
 
-    function setUp() public {
-        uint256[] memory inflationRates = new uint256[](53);
-        for (uint256 i = 0; i < 52; i++) {
-            inflationRates[i] = 100_000;
-        }
-        inflationRates[52] = 50_000;
-
-        uint256[] memory percentageRewardsToPlayers = new uint256[](105);
-        percentageRewardsToPlayers[0] = 6250;
-        percentageRewardsToPlayers[52] = 5000;
-        percentageRewardsToPlayers[104] = 0;
-        for (uint256 i = 1; i < 104; i++) {
-            if (i % 52 != 0) {
-                percentageRewardsToPlayers[i] = percentageRewardsToPlayers[i - 1];
-            }
-        }
-
-        super.setUp(new TestToken(), inflationRates, percentageRewardsToPlayers);
-    }
-
     function testFinalizeInitialPot(uint256 timestamp, uint256 initialSize) public {
         vm.warp(0);
         Lottery lot = new Lottery(
@@ -41,8 +21,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -86,8 +67,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -339,8 +321,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -356,8 +339,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -373,8 +357,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -390,8 +375,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -407,8 +393,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -424,8 +411,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -441,8 +429,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -458,8 +447,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -475,8 +465,9 @@ contract LotteryTest is LotteryTestBase {
                 TICKET_PRICE / 250,
                 fixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -492,13 +483,14 @@ contract LotteryTest is LotteryTestBase {
                 TICKET_PRICE,
                 fixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
 
-        vm.expectRevert(PercentageRewardsCannotBeZeroLength.selector);
+        vm.expectRevert(ReferrerRewardsInvalid.selector);
         new Lottery(
             LotterySetupParams(
                 rewardToken,
@@ -509,27 +501,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            inflationRates,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
             new uint256[](0),
-            MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
-        );
-
-        uint256[] memory wrongPercent = new uint256[](1);
-        wrongPercent[0] = 1e18;
-        vm.expectRevert(PercentageRewardsIsGreaterThanHundredPercent.selector);
-        new Lottery(
-            LotterySetupParams(
-                rewardToken,
-                drawSchedule,
-                TICKET_PRICE,
-                SELECTION_SIZE,
-                SELECTION_MAX,
-                EXPECTED_PAYOUT,
-                fixedRewards
-            ),
-            inflationRates,
-            wrongPercent,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -545,8 +519,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 new uint256[](1)
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -564,8 +539,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 invalidFixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -583,8 +559,9 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 invalidFixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );

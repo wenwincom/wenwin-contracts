@@ -12,33 +12,22 @@ contract ReferralSystemConfig is Script {
     function getLotteryRewardsData()
         internal
         pure
-        returns (uint256[] memory inflationRates, uint256[] memory percentageRewardsToPlayers)
+        returns (
+            uint256 playerRewardFirstDraw,
+            uint256 playerRewardDecrease,
+            uint256[] memory rewardsToReferrersPerDraw
+        )
     {
-        uint256 firstYearInflation = 10; // 10%
-        uint256 secondYearInflation = 5; // 5%
-        uint256 thirdYearInflation = 2; // 2%
+        playerRewardFirstDraw = 961_538.5e18;
+        playerRewardDecrease = 9335.3e18;
 
-        uint256 tokenSupplyAfterFirstYear = (100 + firstYearInflation) * INITIAL_TOKEN_SUPPLY / 100;
-        uint256 tokenSupplyAfterSecondYear = (100 + secondYearInflation) * tokenSupplyAfterFirstYear / 100;
-        uint256 tokenSupplyAfterThirdYear = (100 + thirdYearInflation) * tokenSupplyAfterSecondYear / 100;
-
-        inflationRates = new uint256[](3 * 52);
-        inflationRates[0] = (tokenSupplyAfterFirstYear - INITIAL_TOKEN_SUPPLY) / 52;
-        inflationRates[52] = (tokenSupplyAfterSecondYear - tokenSupplyAfterFirstYear) / 52;
-        inflationRates[104] = (tokenSupplyAfterThirdYear - tokenSupplyAfterSecondYear) / 52;
-        for (uint256 i = 1; i < 3 * 52; i++) {
-            if (i % 52 != 0) {
-                inflationRates[i] = inflationRates[i - 1];
-            }
-        }
-
-        percentageRewardsToPlayers = new uint256[](104);
-        percentageRewardsToPlayers[0] = 6250;
-        percentageRewardsToPlayers[52] = 5000;
-        percentageRewardsToPlayers[104] = 0;
+        rewardsToReferrersPerDraw = new uint256[](104);
+        rewardsToReferrersPerDraw[0] = 700_000e18;
+        rewardsToReferrersPerDraw[52] = 500_000e18;
+        rewardsToReferrersPerDraw[104] = 300_000e18;
         for (uint256 i = 1; i < 104; i++) {
             if (i % 52 != 0) {
-                percentageRewardsToPlayers[i] = percentageRewardsToPlayers[i - 1];
+                rewardsToReferrersPerDraw[i] = rewardsToReferrersPerDraw[i - 1];
             }
         }
     }

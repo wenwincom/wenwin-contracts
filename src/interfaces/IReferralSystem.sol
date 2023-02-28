@@ -4,15 +4,8 @@ pragma solidity 0.8.19;
 
 import "src/interfaces/ILotteryToken.sol";
 
-/// @dev Provided zero address for a lottery token
-error LotteryTokenIsZeroAddress();
-
-/// @dev Percentage rewards arrays are empty
-error PercentageRewardsCannotBeZeroLength();
-
-/// @dev The sum for the referrers and the players percentage rewards for the same index (period) is greater than 100%
-///     (10_000)
-error PercentageRewardsIsGreaterThanHundredPercent();
+/// @dev Referrer rewards setup is invalid
+error ReferrerRewardsInvalid();
 
 interface IReferralSystem {
     /// @dev Data about number of tickets user did not claim rewards for
@@ -37,8 +30,17 @@ interface IReferralSystem {
         uint128 indexed drawId, uint256 indexed referrerRewardForDraw, uint256 indexed playerRewardForDraw
     );
 
-    /// @dev The setup for the percentage rewards for players per year
-    function percentageRewardsToPlayers(uint256 index) external view returns (uint256);
+    /// @dev The setup for the rewards for referrers.
+    /// @param drawId Unique identifier of the draw rewards are queried for.
+    /// @return reffererRewards Total reward amount going to referrers.
+    function rewardsToReferrersPerDraw(uint256 drawId) external view returns (uint256 reffererRewards);
+
+    /// @dev Retrieves total reward for players for first draw.
+    function playerRewardFirstDraw() external view returns (uint256);
+
+    /// @dev Retrieves decrease size for the each draw after the first one.
+    /// Reward for players is calculated as `playerRewardFirstDraw - drawId * playerRewardDecreasePerDraw`.
+    function playerRewardDecreasePerDraw() external view returns (uint256);
 
     function unclaimedTickets(
         uint128 drawId,
