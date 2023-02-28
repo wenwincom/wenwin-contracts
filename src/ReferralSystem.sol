@@ -8,7 +8,10 @@ import "src/interfaces/IReferralSystem.sol";
 abstract contract ReferralSystem is IReferralSystem {
     uint256 internal constant PERCENTAGE_BASE = 10_000;
 
-    uint256[] public override percentageRewardsToPlayers;
+    uint256 public immutable override playerRewardFirstDraw;
+    uint256 public immutable override playerRewardDecreasePerDraw;
+
+    uint256[] public override rewardsToReferrersPerDraw;
 
     mapping(uint128 => mapping(address => UnclaimedTicketsData)) public override unclaimedTickets;
 
@@ -20,20 +23,24 @@ abstract contract ReferralSystem is IReferralSystem {
 
     mapping(uint128 => uint256) public override minimumEligibleReferrals;
 
-    constructor(uint256[] memory _percentageRewardsToPlayers) {
-        uint256 percentageRewardsToPlayersLength = _percentageRewardsToPlayers.length;
-
-        if (percentageRewardsToPlayersLength == 0) {
-            revert PercentageRewardsCannotBeZeroLength();
+    constructor(
+        uint256 _playerRewardFirstDraw,
+        uint256 _playerRewardDecreasePerDraw,
+        uint256[] memory _rewardsToReferrersPerDraw
+    ) {
+        if (_rewardsToReferrersPerDraw.length == 0) {
+            revert ReferrerRewardsInvalid();
         }
-
-        for (uint256 counter = 0; counter < percentageRewardsToPlayersLength; ++counter) {
-            if (_percentageRewardsToPlayers[counter] > PERCENTAGE_BASE) {
-                revert PercentageRewardsIsGreaterThanHundredPercent();
+        for (uint256 i = 0; i < _rewardsToReferrersPerDraw.length; ++i) {
+            if (_rewardsToReferrersPerDraw[i] == 0) {
+                revert ReferrerRewardsInvalid();
             }
         }
 
-        percentageRewardsToPlayers = _percentageRewardsToPlayers;
+        rewardsToReferrersPerDraw = _rewardsToReferrersPerDraw;
+
+        playerRewardFirstDraw = _playerRewardFirstDraw;
+        playerRewardDecreasePerDraw = _playerRewardDecreasePerDraw;
     }
 
     /// @dev Registers tickets for player and referrer (if an address is not zero)
@@ -76,31 +83,26 @@ abstract contract ReferralSystem is IReferralSystem {
     /// @dev Draw is being finalized, does the rewards calculations for the draw
     /// @param drawFinalized Draw being finalized
     /// @param ticketsSoldDuringDraw Number of tickets sold during the draw that is finalized
-    function referralDrawFinalize(
-        uint128 drawFinalized,
-        uint256 ticketsSoldDuringDraw,
-        uint256 mintableNativeTokens
-    )
-        internal
-    {
+    function referralDrawFinalize(uint128 drawFinalized, uint256 ticketsSoldDuringDraw) internal {
         // if no tickets sold there is no incentives, so no rewards to be set
         if (ticketsSoldDuringDraw == 0) {
             return;
         }
 
-        uint256 percentageRewardToPlayers =
-            percentageRewardsToPlayers[Math.min(drawFinalized, percentageRewardsToPlayers.length - 1)];
-        uint256 playerRewardForDraw = mintableNativeTokens * percentageRewardToPlayers / PERCENTAGE_BASE;
-        uint256 referrerRewardForDraw = mintableNativeTokens - playerRewardForDraw;
+        minimumEligibleReferrals[drawFinalized + 1] =
+            getMinimumEligibleReferralsFactorCalculation(ticketsSoldDuringDraw);
 
+        uint256 referrerRewardForDraw = referrerRewardsPerDraw(drawFinalized);
         uint256 totalTicketsForReferrersPerCurrentDraw = totalTicketsForReferrersPerDraw[drawFinalized];
         if (totalTicketsForReferrersPerCurrentDraw > 0) {
             referrerRewardPerDrawForOneTicket[drawFinalized] =
                 referrerRewardForDraw / totalTicketsForReferrersPerCurrentDraw;
         }
-        playerRewardsPerDrawForOneTicket[drawFinalized] = playerRewardForDraw / ticketsSoldDuringDraw;
-        minimumEligibleReferrals[drawFinalized + 1] =
-            getMinimumEligibleReferralsFactorCalculation(ticketsSoldDuringDraw);
+
+        uint256 playerRewardForDraw = playerRewardsPerDraw(drawFinalized);
+        if (playerRewardForDraw > 0) {
+            playerRewardsPerDrawForOneTicket[drawFinalized] = playerRewardForDraw / ticketsSoldDuringDraw;
+        }
 
         emit CalculatedRewardsForDraw(drawFinalized, referrerRewardForDraw, playerRewardForDraw);
     }
@@ -145,5 +147,14 @@ abstract contract ReferralSystem is IReferralSystem {
         if (claimedReward > 0) {
             emit ClaimedReferralReward(drawId, msg.sender, claimedReward);
         }
+    }
+
+    function playerRewardsPerDraw(uint128 drawId) internal view returns (uint256 rewards) {
+        uint256 decrease = uint256(drawId) * playerRewardDecreasePerDraw;
+        return playerRewardFirstDraw > decrease ? (playerRewardFirstDraw - decrease) : 0;
+    }
+
+    function referrerRewardsPerDraw(uint128 drawId) internal view returns (uint256 rewards) {
+        return rewardsToReferrersPerDraw[Math.min(rewardsToReferrersPerDraw.length - 1, drawId)];
     }
 }

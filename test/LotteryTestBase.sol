@@ -22,8 +22,11 @@ abstract contract LotteryTestBase is Test {
     address public constant FRONTEND_ADDRESS = address(444);
 
     ILotteryToken public lotteryToken;
-    uint256[] public percentageRewardsToPlayers;
-    uint256[] public inflationRates;
+    uint256[] public rewardsToReferrersPerDraw;
+
+    uint256 public playerRewardFirstDraw;
+    uint256 public playerRewardDecrease;
+
     address public randomNumberSource = address(1_234_567_890);
 
     uint256[] public fixedRewards;
@@ -31,18 +34,23 @@ abstract contract LotteryTestBase is Test {
     uint256 public constant MAX_RN_FAILED_ATTEMPTS = 5;
     uint256 public constant MAX_RN_REQUEST_DELAY = 30 minutes;
 
-    function setUp(
-        TestToken _rewardToken,
-        uint256[] memory _inflationRates,
-        uint256[] memory _percRewardsToPlayers
-    )
-        internal
-    {
-        firstDrawAt = block.timestamp + 3 * PERIOD;
-        rewardToken = _rewardToken;
+    function setUp() public virtual {
+        rewardToken = new TestToken();
 
-        percentageRewardsToPlayers = _percRewardsToPlayers;
-        inflationRates = _inflationRates;
+        playerRewardFirstDraw = 961_538.5e18;
+        playerRewardDecrease = 9335.3e18;
+
+        rewardsToReferrersPerDraw = new uint256[](105);
+        rewardsToReferrersPerDraw[0] = 700_000e18;
+        rewardsToReferrersPerDraw[52] = 500_000e18;
+        rewardsToReferrersPerDraw[104] = 300_000e18;
+        for (uint256 i = 1; i < 104; i++) {
+            if (i % 52 != 0) {
+                rewardsToReferrersPerDraw[i] = rewardsToReferrersPerDraw[i - 1];
+            }
+        }
+
+        firstDrawAt = block.timestamp + 3 * PERIOD;
 
         fixedRewards = new uint256[](SELECTION_SIZE);
         fixedRewards[1] = TICKET_PRICE;
@@ -51,7 +59,7 @@ abstract contract LotteryTestBase is Test {
 
         lottery = new Lottery(
             LotterySetupParams(
-                _rewardToken,
+                rewardToken,
                 LotteryDrawSchedule(firstDrawAt, PERIOD, COOL_DOWN_PERIOD),
                 TICKET_PRICE,
                 SELECTION_SIZE,
@@ -59,8 +67,9 @@ abstract contract LotteryTestBase is Test {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            _inflationRates,
-            _percRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );

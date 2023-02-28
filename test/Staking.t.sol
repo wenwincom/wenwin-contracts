@@ -12,18 +12,8 @@ contract StakingTest is LotteryTestBase {
 
     ILotteryToken public stakingToken;
 
-    function setUp() public {
-        TestToken _rewardToken = new TestToken();
-        uint256[] memory inflationRates = new uint256[](2);
-        inflationRates[0] = 100_000;
-        inflationRates[1] = 50_000;
-
-        uint256[] memory percRewardsToPlayers = new uint256[](3);
-        percRewardsToPlayers[0] = 6250;
-        percRewardsToPlayers[1] = 5000;
-        percRewardsToPlayers[2] = 0;
-
-        super.setUp(_rewardToken, inflationRates, percRewardsToPlayers);
+    function setUp() public override {
+        super.setUp();
         staking = IStaking(lottery.stakingRewardRecipient());
         stakingToken = ILotteryToken(address(lottery.nativeToken()));
     }

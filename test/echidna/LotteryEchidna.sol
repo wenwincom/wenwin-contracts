@@ -28,8 +28,9 @@ contract LotteryEchidna {
     Lottery internal lottery;
 
     ILotteryToken internal lotteryToken;
-    uint256[] internal inflationRates;
-    uint256[] internal percentageRewardsToPlayers;
+    uint256 public playerRewardFirstDraw;
+    uint256 public playerRewardDecrease;
+    uint256[] internal rewardsToReferrersPerDraw;
     uint256[] internal fixedRewards;
 
     uint256 internal rewardTokenLotteryBalance;
@@ -41,14 +42,18 @@ contract LotteryEchidna {
         firstDrawAt = block.timestamp + 3 * PERIOD;
         rewardToken = new TestToken();
 
-        percentageRewardsToPlayers = new uint256[](3);
-        percentageRewardsToPlayers[0] = 6250;
-        percentageRewardsToPlayers[1] = 5000;
-        percentageRewardsToPlayers[2] = 0;
+        rewardsToReferrersPerDraw = new uint256[](104);
+        rewardsToReferrersPerDraw[0] = 700_000e18;
+        rewardsToReferrersPerDraw[52] = 500_000e18;
+        rewardsToReferrersPerDraw[104] = 300_000e18;
+        for (uint256 i = 1; i < 104; i++) {
+            if (i % 52 != 0) {
+                rewardsToReferrersPerDraw[i] = rewardsToReferrersPerDraw[i - 1];
+            }
+        }
 
-        inflationRates = new uint256[](2);
-        inflationRates[0] = 100_000;
-        inflationRates[1] = 50_000;
+        playerRewardFirstDraw = 961_538.5e18;
+        playerRewardDecrease = 9335.3e18;
 
         fixedRewards = new uint256[](SELECTION_SIZE);
         fixedRewards[1] = TICKET_PRICE;
@@ -65,8 +70,9 @@ contract LotteryEchidna {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            inflationRates,
-            percentageRewardsToPlayers,
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
             MAX_FAILED_ATTEMPTS,
             MAX_REQUEST_DELAY
         );

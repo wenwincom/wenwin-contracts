@@ -13,8 +13,8 @@ abstract contract ReferralSystemBase is LotteryTestBase {
         user = makeAddr("user");
     }
 
-    function setUp(uint256[] memory _inflationRates, uint256[] memory _perRewardsToPlayers) internal {
-        super.setUp(new TestToken(), _inflationRates, _perRewardsToPlayers);
+    function setUp() public override {
+        super.setUp();
         referralSystem = lottery;
     }
 
@@ -144,9 +144,7 @@ abstract contract ReferralSystemBase is LotteryTestBase {
         vm.prank(randomReferrer);
         referralSystem.claimReferralReward(drawIds);
 
-        uint256 mintedAmount = inflationRates[0];
-        uint256 referrersInflationRates = 10_000 - percentageRewardsToPlayers[0];
-        assertEq(lotteryToken.balanceOf(randomReferrer), mintedAmount * referrersInflationRates / 10_000);
+        assertEq(lotteryToken.balanceOf(randomReferrer), rewardsToReferrersPerDraw[0]);
     }
 
     function testClaimReferrerMultipleDraws() public {
@@ -173,9 +171,7 @@ abstract contract ReferralSystemBase is LotteryTestBase {
         vm.prank(randomReferrer);
         referralSystem.claimReferralReward(drawIds);
 
-        uint256 mintedAmount = inflationRates[0];
-        uint256 referrersInflationRates = 10_000 - percentageRewardsToPlayers[0];
-        assertEq(lotteryToken.balanceOf(randomReferrer), 2 * (mintedAmount * referrersInflationRates / 10_000));
+        assertEq(lotteryToken.balanceOf(randomReferrer), rewardsToReferrersPerDraw[0] + rewardsToReferrersPerDraw[1]);
     }
 
     function testCannotClaimReferrer() public {
@@ -203,8 +199,7 @@ abstract contract ReferralSystemBase is LotteryTestBase {
         vm.prank(user);
         referralSystem.claimReferralReward(drawIds);
 
-        uint256 mintedAmount = inflationRates[0];
-        assertEq(lotteryToken.balanceOf(user), mintedAmount * percentageRewardsToPlayers[0] / 10_000);
+        assertEq(lotteryToken.balanceOf(user), rewardsToReferrersPerDraw[0]);
     }
 
     function testClaimPlayerMultipleDraws() public {
@@ -230,8 +225,7 @@ abstract contract ReferralSystemBase is LotteryTestBase {
         vm.prank(user);
         referralSystem.claimReferralReward(drawIds);
 
-        uint256 mintedAmount = inflationRates[0];
-        assertEq(lotteryToken.balanceOf(user), 2 * (mintedAmount * percentageRewardsToPlayers[0] / 10_000));
+        assertEq(lotteryToken.balanceOf(user), rewardsToReferrersPerDraw[0] + rewardsToReferrersPerDraw[1]);
     }
 
     function testCannotClaimPlayer() public {
