@@ -8,6 +8,7 @@ import { ILottery } from "src/interfaces/ILottery.sol";
 import { ILotteryToken } from "src/interfaces/ILotteryToken.sol";
 import { IStaking, ZeroAmountInput } from "src/staking/interfaces/IStaking.sol";
 import { LotteryMath } from "src/LotteryMath.sol";
+import { PercentageMath } from "src/PercentageMath.sol";
 
 contract StakingEchidna {
     address internal constant HEVM_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
@@ -146,7 +147,7 @@ contract StakingEchidna {
     function getMaxRewardAmount() public view returns (uint256 maxRewardAmount) {
         uint256 ticketPrice = lottery.ticketPrice();
         uint256 totalTickets = lottery.nextTicketId();
-        maxRewardAmount = (totalTickets * ticketPrice * LotteryMath.STAKING_REWARD) / LotteryMath.PERCENTAGE_BASE;
+        maxRewardAmount = (totalTickets * ticketPrice * LotteryMath.STAKING_REWARD) / PercentageMath.PERCENTAGE_BASE;
     }
 
     function withdrawPostCondition(
