@@ -2,8 +2,9 @@
 // slither-disable-next-line solc-version
 pragma solidity 0.8.19;
 
-import "./Hevm.sol";
+import { Hevm } from "./Hevm.sol";
 import { RNSourceEchidna } from "./RNSourceEchidna.sol";
+import { StakingEchidna } from "./StakingEchidna.sol";
 import { Lottery } from "src/Lottery.sol";
 import "src/LotteryToken.sol";
 import "../TestToken.sol";
@@ -24,7 +25,6 @@ contract LotteryEchidna {
     uint8 internal constant SELECTION_MAX = 8;
     uint256 internal constant EXPECTED_PAYOUT = 38e16;
 
-    RNSourceEchidna internal rnSource;
     Lottery internal lottery;
 
     ILotteryToken internal lotteryToken;
@@ -37,6 +37,11 @@ contract LotteryEchidna {
     bool internal drawExecutionInProgressEchidna;
     uint128 internal drawIdEchidna;
     mapping(address => uint256[]) internal boughtTickets;
+
+    RNSourceEchidna internal rnSource;
+    StakingEchidna internal stakingEchidna;
+
+    event Log(string, uint256);
 
     constructor() {
         firstDrawAt = block.timestamp + 3 * PERIOD;
@@ -86,6 +91,8 @@ contract LotteryEchidna {
         rewardTokenLotteryBalance = 1e24; // solhint-disable-line reentrancy
         Hevm(HEVM_ADDRESS).warp(lottery.initialPotDeadline() + 1);
         lottery.finalizeInitialPotRaise();
+
+        stakingEchidna = new StakingEchidna(lottery, lotteryToken);
     }
 
     function buyTicket(uint120 ticketCombination, address frontend, address referrer) public virtual {
@@ -233,6 +240,26 @@ contract LotteryEchidna {
         }
     }
 
+    function stakingEchidnaStake(uint256 amount) external {
+        Hevm(HEVM_ADDRESS).prank(msg.sender);
+        stakingEchidna.stake(amount);
+    }
+
+    function stakingEchidnaWithdraw(uint256 amount) external {
+        Hevm(HEVM_ADDRESS).prank(msg.sender);
+        stakingEchidna.withdraw(amount);
+    }
+
+    function stakingEchidnaGetReward() external {
+        Hevm(HEVM_ADDRESS).prank(msg.sender);
+        stakingEchidna.getReward();
+    }
+
+    function stakingEchidnaExit() external {
+        Hevm(HEVM_ADDRESS).prank(msg.sender);
+        stakingEchidna.exit();
+    }
+
     function buyTickets_(
         uint128[] memory drawIds,
         uint120[] memory ticketCombinations,
@@ -242,6 +269,21 @@ contract LotteryEchidna {
         private
     {
         // Pre-condition
+        uint256 drawIdsLength = drawIds.length;
+        // This if-else structure helps Echidna increase its corpus by artificially forcing it to buy 0, 1-9, 10-19 etc.
+        // tickets at once in different flows.
+        if (drawIdsLength < 1) {
+            emit Log("buyTickets_", drawIdsLength);
+        } else if (drawIdsLength < 10) {
+            emit Log("buyTickets_", drawIdsLength);
+        } else if (drawIdsLength < 50) {
+            emit Log("buyTickets_", drawIdsLength);
+        } else if (drawIdsLength < 100) {
+            emit Log("buyTickets_", drawIdsLength);
+        } else {
+            emit Log("buyTickets_", drawIdsLength);
+        }
+
         uint256 senderRewardTokenBalanceBefore = rewardToken.balanceOf(address(msg.sender));
         Hevm(HEVM_ADDRESS).prank(msg.sender);
         rewardToken.mint(TICKET_PRICE * ticketCombinations.length);
@@ -402,7 +444,20 @@ contract LotteryEchidna {
     }
 
     function executeAndFulfillNumber_(uint8 numberOfDraws, uint256 randomNumber) private {
-        for (uint8 counter = 0; counter < numberOfDraws % ECHIDNA_MAX_NUMBER_OF_DRAWS; ++counter) {
+        uint8 numberOfDrawsScaled = numberOfDraws % ECHIDNA_MAX_NUMBER_OF_DRAWS;
+        // This if-else structure helps Echidna increase its corpus by artificially forcing it to execute later draws in
+        // future. It creates different flows for up to one year (test lottery is running on 30-day basis, thus ~12
+        // draws per year), up to two years, and more than three years.
+        if (numberOfDrawsScaled < 1) {
+            emit Log("executeAndFulfillNumber_", numberOfDrawsScaled);
+        } else if (numberOfDrawsScaled < 12) {
+            emit Log("executeAndFulfillNumber_", numberOfDrawsScaled);
+        } else if (numberOfDrawsScaled < 24) {
+            emit Log("executeAndFulfillNumber_", numberOfDrawsScaled);
+        } else {
+            emit Log("executeAndFulfillNumber_", numberOfDrawsScaled);
+        }
+        for (uint8 counter = 0; counter < numberOfDrawsScaled; ++counter) {
             Hevm(HEVM_ADDRESS).warp(block.timestamp + PERIOD);
             executeDraw_();
             fulfillRandomNumber_(randomNumber % block.timestamp);
