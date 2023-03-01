@@ -4,9 +4,10 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "src/interfaces/IReferralSystem.sol";
+import "src/PercentageMath.sol";
 
 abstract contract ReferralSystem is IReferralSystem {
-    uint256 internal constant PERCENTAGE_BASE = 10_000;
+    using PercentageMath for uint256;
 
     uint256 public immutable override playerRewardFirstDraw;
     uint256 public immutable override playerRewardDecreasePerDraw;
@@ -114,13 +115,16 @@ abstract contract ReferralSystem is IReferralSystem {
         returns (uint256 minimumEligible)
     {
         if (totalTicketsSoldPrevDraw < 10_000) {
-            return 100 * totalTicketsSoldPrevDraw / PERCENTAGE_BASE;
+            // 1%
+            return totalTicketsSoldPrevDraw.getPercentage(PercentageMath.ONE_PERCENT);
         }
         if (totalTicketsSoldPrevDraw < 100_000) {
-            return 75 * totalTicketsSoldPrevDraw / PERCENTAGE_BASE;
+            // 0.75%
+            return totalTicketsSoldPrevDraw.getPercentage(PercentageMath.ONE_PERCENT * 75 / 100);
         }
         if (totalTicketsSoldPrevDraw < 1_000_000) {
-            return 50 * totalTicketsSoldPrevDraw / PERCENTAGE_BASE;
+            // 0.5%
+            return totalTicketsSoldPrevDraw.getPercentage(PercentageMath.ONE_PERCENT * 50 / 100);
         }
         return 5000;
     }

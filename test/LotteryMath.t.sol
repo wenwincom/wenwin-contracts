@@ -43,7 +43,7 @@ contract LotteryMathTest is Test {
             assertEq(
                 reward,
                 fixedReward * LotteryMath.calculateMultiplier(excess, ticketsSold, expectedPayout)
-                    / LotteryMath.PERCENTAGE_BASE
+                    / PercentageMath.PERCENTAGE_BASE
             );
         }
     }
@@ -54,12 +54,12 @@ contract LotteryMathTest is Test {
         uint256 expectedPayout = 38e16;
         uint256 multi = LotteryMath.calculateMultiplier(excessPot, ticketsSold, expectedPayout);
         if (excessPot * ticketsSold == 0) {
-            assertEq(multi, LotteryMath.PERCENTAGE_BASE);
+            assertEq(multi, PercentageMath.PERCENTAGE_BASE);
         } else {
-            assertGe(multi, LotteryMath.PERCENTAGE_BASE);
+            assertGe(multi, PercentageMath.PERCENTAGE_BASE);
             uint256 totalExpectedPayout = ticketsSold * expectedPayout;
             uint256 multiCalc =
-                LotteryMath.PERCENTAGE_BASE + (excessPot / 2) * LotteryMath.PERCENTAGE_BASE / totalExpectedPayout;
+                PercentageMath.PERCENTAGE_BASE + (excessPot / 2) * PercentageMath.PERCENTAGE_BASE / totalExpectedPayout;
             assertEq(multiCalc, multi);
         }
     }
