@@ -20,4 +20,12 @@ contract LotteryEchidnaProperty is LotteryEchidna {
     function echidnaCheckLotteryTokenBalance() public view returns (bool) {
         return (lotteryToken.balanceOf(address(this)) >= lotteryToken.INITIAL_SUPPLY());
     }
+
+    function echidnaCheckStakingTotalSupply() public view returns (bool) {
+        return (stakingEchidna.stakingContract().totalSupply() == stakingEchidna.stakingTotalSupply());
+    }
+
+    function echidnaCheckSumOfRewards() public view returns (bool) {
+        return (stakingEchidna.sumOfRewards() <= stakingEchidna.getMaxRewardAmount());
+    }
 }

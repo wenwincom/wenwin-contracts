@@ -33,7 +33,7 @@ testLimit: 50000
 #seqLen: 100
 
 #shrinkLimit determines how much effort is spent shrinking failing sequences
-#shrinkLimit: 5000
+shrinkLimit: 10000
 
 #coverage controls coverage guided testing
 coverage: true
