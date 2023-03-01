@@ -45,9 +45,10 @@ contract LotteryTest is LotteryTestBase {
         }
         lot.finalizeInitialPotRaise();
         if (!reverts) {
+            uint256 percentageInitial = initialSize * 30_030 / 100_000;
             assertEq(
                 lot.fixedReward(SELECTION_SIZE),
-                (initialSize >= lot.jackpotBound() * 4) ? lot.jackpotBound() : (initialSize / 4)
+                (percentageInitial >= lot.jackpotBound()) ? lot.jackpotBound() : percentageInitial
             );
             assertEq(lot.initialPot(), initialSize);
             vm.expectRevert(JackpotAlreadyInitialized.selector);
