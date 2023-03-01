@@ -11,8 +11,8 @@ library PercentageMath {
     uint256 public constant ONE_PERCENT = 1000;
 
     /// @dev Calculates percentage of the number.
-    /// @param number Input we need to calculate percentage for.
-    /// @param percentage Percentage we need to calculate in `PERCENTAGE_BASE` precision.
+    /// @param number Input to calculate percentage for.
+    /// @param percentage Percentage to calculate in `PERCENTAGE_BASE` precision.
     /// @return result Resulting number representing `percentage` of `number`.
     function getPercentage(uint256 number, uint256 percentage) internal pure returns (uint256 result) {
         return number * percentage / PERCENTAGE_BASE;
