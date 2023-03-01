@@ -4,11 +4,14 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "src/PercentageMath.sol";
 import "src/LotteryToken.sol";
 import "src/interfaces/ILotterySetup.sol";
 import "src/Ticket.sol";
 
 contract LotterySetup is ILotterySetup {
+    using PercentageMath for uint256;
+
     uint256 public immutable override minInitialPot;
     uint256 public immutable override jackpotBound;
 
@@ -29,6 +32,8 @@ contract LotterySetup is ILotterySetup {
     uint256 public immutable override expectedPayout;
 
     uint256 private immutable nonJackpotFixedRewards;
+
+    uint256 private constant BASE_JACKPOT_PERCENTAGE = 30_030; // 30.03%
 
     /// @dev Constructs a new lottery contract
     /// @param lotterySetupParams Setup parameter for the lottery
@@ -73,7 +78,7 @@ contract LotterySetup is ILotterySetup {
         nativeToken = new LotteryToken();
         uint256 tokenUnit = 10 ** IERC20Metadata(address(lotterySetupParams.token)).decimals();
         minInitialPot = 4 * tokenUnit;
-        jackpotBound = 5_000_000 * tokenUnit;
+        jackpotBound = 2_000_000 * tokenUnit;
         rewardToken = lotterySetupParams.token;
         firstDrawSchedule = lotterySetupParams.drawSchedule.firstDrawScheduledAt;
         drawPeriod = lotterySetupParams.drawSchedule.drawPeriod;
@@ -153,7 +158,7 @@ contract LotterySetup is ILotterySetup {
     }
 
     function _baseJackpot(uint256 _initialPot) internal view returns (uint256) {
-        return Math.min(_initialPot / 4, jackpotBound);
+        return Math.min(_initialPot.getPercentage(BASE_JACKPOT_PERCENTAGE), jackpotBound);
     }
 
     function packFixedRewards(uint256[] memory rewards) private view returns (uint256 packed) {
