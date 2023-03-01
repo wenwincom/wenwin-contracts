@@ -21,7 +21,7 @@ contract ReferralSystemConfig is Script {
         playerRewardFirstDraw = 961_538.5e18;
         playerRewardDecrease = 9335.3e18;
 
-        rewardsToReferrersPerDraw = new uint256[](104);
+        rewardsToReferrersPerDraw = new uint256[](105);
         rewardsToReferrersPerDraw[0] = 700_000e18;
         rewardsToReferrersPerDraw[52] = 500_000e18;
         rewardsToReferrersPerDraw[104] = 300_000e18;
