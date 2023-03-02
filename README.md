@@ -45,6 +45,21 @@ following command in the terminal:
 slither .
 ```
 
+### Echidna
+
+Echidna is a tool for fuzzing/property-based testing smart contracts
+([installation instructions](https://github.com/crytic/echidna)). To run Echidna in the assertion testing mode, execute:
+
+```bash
+yarn echidna-assertion # or `echidna-test . --contract LotteryEchidna --config echidna.assertion.config.yaml` if Yarn is not installed
+```
+
+To run Echidna in the property testing mode, execute:
+
+```bash
+yarn echidna-property # or `echidna-test . --contract LotteryEchidnaProperty --config echidna.property.config.yaml` if Yarn is not installed
+```
+
 ## Lottery
 
 The Wenwin Lottery is a next-generation lottery game built on Polygon that utilizes blockchain technology to provide a
