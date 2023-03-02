@@ -37,6 +37,7 @@ contract LotteryEchidna {
     bool internal drawExecutionInProgressEchidna;
     uint128 internal drawIdEchidna;
     mapping(address => uint256[]) internal boughtTickets;
+    uint256 internal numberOfClaimedTickets;
 
     RNSourceEchidna internal rnSource;
     StakingEchidna internal stakingEchidna;
@@ -61,9 +62,9 @@ contract LotteryEchidna {
         playerRewardDecrease = 9335.3e18;
 
         fixedRewards = new uint256[](SELECTION_SIZE);
-        fixedRewards[1] = TICKET_PRICE;
-        fixedRewards[2] = 2 * TICKET_PRICE;
-        fixedRewards[3] = 3 * TICKET_PRICE;
+        for (uint8 counter = 1; counter < SELECTION_SIZE; counter++) {
+            fixedRewards[counter] = counter * TICKET_PRICE;
+        }
 
         lottery = new Lottery(
             LotterySetupParams(
@@ -144,10 +145,11 @@ contract LotteryEchidna {
     {
         // Pre-condition
         uint256[] memory ticketIds;
+        uint256[] memory ticketIdsFilter;
+        uint256 filterCounter;
         if (isRandom) {
             uint256 totalSupply = lottery.lastDrawFinalTicketId();
-            uint256[] memory ticketIdsFilter = new uint256[](ticketIdsRandom.length);
-            uint256 filterCounter;
+            ticketIdsFilter = new uint256[](ticketIdsRandom.length);
             for (uint256 counter = 0; counter < ticketIdsRandom.length; ++counter) {
                 uint256 ticketId = ticketIdsRandom[counter] % totalSupply;
                 bool found;
@@ -161,14 +163,28 @@ contract LotteryEchidna {
                     ++filterCounter;
                 }
             }
-            ticketIds = new uint256[](filterCounter);
-            for (uint256 counter = 0; counter < filterCounter; counter++) {
-                ticketIds[counter] = ticketIdsFilter[counter];
-            }
         } else {
-            ticketIds = boughtTickets[msg.sender];
+            ticketIdsFilter = new uint256[](boughtTickets[msg.sender].length);
+            for (uint256 counter = 0; counter < boughtTickets[msg.sender].length; ++counter) {
+                ticketIdsFilter[filterCounter] = boughtTickets[msg.sender][counter];
+                ++filterCounter;
+            }
         }
+        ticketIds = new uint256[](filterCounter);
+        for (uint256 counter = 0; counter < filterCounter; counter++) {
+            ticketIds[counter] = ticketIdsFilter[counter];
+        }
+
         require(ticketIds.length > 0, "No tickets to claim");
+        if (numberOfDraws < 1) {
+            emit Log("claimWinningTickets", numberOfDraws);
+        } else if (numberOfDraws < 12) {
+            emit Log("claimWinningTickets", numberOfDraws);
+        } else if (numberOfDraws < 24) {
+            emit Log("claimWinningTickets", numberOfDraws);
+        } else {
+            emit Log("claimWinningTickets", numberOfDraws);
+        }
         executeAndFulfillNumber_(numberOfDraws, randomNumber);
 
         uint256 claimedAmountInternal;
@@ -195,6 +211,8 @@ contract LotteryEchidna {
                 assert(claimableAmount == 0);
             }
             rewardTokenLotteryBalance -= claimedAmount;
+            numberOfClaimedTickets += ticketIds.length;
+            assert(checkNumberOfClaimedTickets());
         } catch (bytes memory reason) {
             // Reverts
             bytes32 reasonInBytes32 = keccak256(reason);
@@ -347,6 +365,18 @@ contract LotteryEchidna {
         uint256 senderBalanceBefore = lotteryToken.balanceOf(msg.sender);
         uint256 lotteryBalanceBefore = lotteryToken.balanceOf(address(this));
 
+        // This if-else structure helps Echidna increase its corpus by artificially forcing it to execute later draws in
+        // future. It creates different flows for up to one year (test lottery is running on 30-day basis, thus ~12
+        // draws per year), up to two years, and more than three years.
+        if (numberOfDraws < 1) {
+            emit Log("claimReferralReward", numberOfDraws);
+        } else if (numberOfDraws < 12) {
+            emit Log("claimReferralReward", numberOfDraws);
+        } else if (numberOfDraws < 24) {
+            emit Log("claimReferralReward", numberOfDraws);
+        } else {
+            emit Log("claimReferralReward", numberOfDraws);
+        }
         executeAndFulfillNumber_(numberOfDraws, randomNumber);
 
         // Action
@@ -376,6 +406,28 @@ contract LotteryEchidna {
             }
             assert(false);
         }
+    }
+
+    function validateRewardWonType(uint128 drawId) internal view returns (bool) {
+        uint8 selectionSize = lottery.selectionSize();
+        if (lottery.winAmount(drawId, selectionSize) > 0) {
+            for (uint8 counter = 0; counter < selectionSize; ++counter) {
+                if (lottery.winAmount(drawId, counter) > 0) {
+                    return false;
+                }
+            }
+        } else {
+            for (uint8 counter = 1; counter < selectionSize; ++counter) {
+                if (lottery.winAmount(drawId, counter) == 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function checkNumberOfClaimedTickets() internal view returns (bool) {
+        return (numberOfClaimedTickets <= lottery.nextTicketId());
     }
 
     function executeDraw_() private {
@@ -421,6 +473,7 @@ contract LotteryEchidna {
             assert(drawExecutionInProgressBefore);
             assert(lottery.drawExecutionInProgress() == false);
             assert(drawIdBefore + 1 == lottery.currentDraw());
+            assert(validateRewardWonType(drawIdBefore) == true);
             drawExecutionInProgressEchidna = false;
             drawIdEchidna = lottery.currentDraw();
         } catch (bytes memory reason) {
@@ -445,18 +498,6 @@ contract LotteryEchidna {
 
     function executeAndFulfillNumber_(uint8 numberOfDraws, uint256 randomNumber) private {
         uint8 numberOfDrawsScaled = numberOfDraws % ECHIDNA_MAX_NUMBER_OF_DRAWS;
-        // This if-else structure helps Echidna increase its corpus by artificially forcing it to execute later draws in
-        // future. It creates different flows for up to one year (test lottery is running on 30-day basis, thus ~12
-        // draws per year), up to two years, and more than three years.
-        if (numberOfDrawsScaled < 1) {
-            emit Log("executeAndFulfillNumber_", numberOfDrawsScaled);
-        } else if (numberOfDrawsScaled < 12) {
-            emit Log("executeAndFulfillNumber_", numberOfDrawsScaled);
-        } else if (numberOfDrawsScaled < 24) {
-            emit Log("executeAndFulfillNumber_", numberOfDrawsScaled);
-        } else {
-            emit Log("executeAndFulfillNumber_", numberOfDrawsScaled);
-        }
         for (uint8 counter = 0; counter < numberOfDrawsScaled; ++counter) {
             Hevm(HEVM_ADDRESS).warp(block.timestamp + PERIOD);
             executeDraw_();

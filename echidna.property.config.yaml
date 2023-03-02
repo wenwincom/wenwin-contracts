@@ -96,7 +96,7 @@ multi-abi: true
 #campaign timeout (in seconds)
 
 #list of methods to filter
-filterFunctions: ["Lottery.executeDraw()", "Lottery.claimFees(uint8)", "RNSourceEchidna.fulfillRandomNumber(uint256)"]
+filterFunctions: ["Lottery.executeDraw()", "Lottery.claimRewards(uint8)", "Lottery.claimWinningTickets(uint256[])", "RNSourceEchidna.fulfillRandomNumber(uint256)"]
 
 # by default, blacklist methods in filterFunctions
 filterBlacklist: true

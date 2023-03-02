@@ -28,4 +28,18 @@ contract LotteryEchidnaProperty is LotteryEchidna {
     function echidnaCheckSumOfRewards() public view returns (bool) {
         return (stakingEchidna.sumOfRewards() <= stakingEchidna.getMaxRewardAmount());
     }
+
+    function echidnaValidateRewardWonType() public view returns (bool) {
+        uint128 currentDraw = lottery.currentDraw();
+        for (uint128 counter = 0; counter < currentDraw; ++counter) {
+            if (validateRewardWonType(counter) == false) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function echidnaCheckNumberOfClaimedTickets() public view returns (bool) {
+        return checkNumberOfClaimedTickets();
+    }
 }
