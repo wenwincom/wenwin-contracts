@@ -11,15 +11,7 @@ import "src/Lottery.sol";
 contract LotteryConfig is Script {
     using Strings for uint8;
 
-    function getLottery(
-        IERC20 rewardToken,
-        uint256 playerRewardFirstDraw,
-        uint256 playerRewardDecrease,
-        uint256[] memory rewardsToReferrersPerDraw
-    )
-        internal
-        returns (Lottery lottery)
-    {
+    function getLottery(IERC20 rewardToken, address rewardsRecipient) internal returns (Lottery lottery) {
         uint8 selectionSize = uint8(vm.envUint("LOTTERY_SELECTION_SIZE"));
 
         lottery = new Lottery(
@@ -36,9 +28,7 @@ contract LotteryConfig is Script {
                 uint256(vm.envUint("LOTTERY_EXPECTED_PAYOUT")),
                 getFixedRewards(selectionSize)
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             vm.envUint("SOURCE_MAX_FAILED_ATTEMPTS"),
             vm.envUint("SOURCE_MAX_REQUEST_DELAY")
         );

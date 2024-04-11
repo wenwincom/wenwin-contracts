@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "../src/Lottery.sol";
-import "../src/LotteryToken.sol";
 import "./TestToken.sol";
 
 abstract contract LotteryTestBase is Test {
@@ -21,11 +20,7 @@ abstract contract LotteryTestBase is Test {
     uint256 public constant EXPECTED_PAYOUT = 38e16;
     address public constant FRONTEND_ADDRESS = address(444);
 
-    ILotteryToken public lotteryToken;
-    uint256[] public rewardsToReferrersPerDraw;
-
-    uint256 public playerRewardFirstDraw;
-    uint256 public playerRewardDecrease;
+    address rewardsRecipient = address(0x1936582);
 
     address public randomNumberSource = address(1_234_567_890);
 
@@ -36,19 +31,6 @@ abstract contract LotteryTestBase is Test {
 
     function setUp() public virtual {
         rewardToken = new TestToken();
-
-        playerRewardFirstDraw = 961_538.5e18;
-        playerRewardDecrease = 9335.3e18;
-
-        rewardsToReferrersPerDraw = new uint256[](105);
-        rewardsToReferrersPerDraw[0] = 700_000e18;
-        rewardsToReferrersPerDraw[52] = 500_000e18;
-        rewardsToReferrersPerDraw[104] = 300_000e18;
-        for (uint256 i = 1; i < 104; i++) {
-            if (i % 52 != 0) {
-                rewardsToReferrersPerDraw[i] = rewardsToReferrersPerDraw[i - 1];
-            }
-        }
 
         firstDrawAt = block.timestamp + 3 * PERIOD;
 
@@ -67,13 +49,10 @@ abstract contract LotteryTestBase is Test {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
-        lotteryToken = ILotteryToken(address(lottery.nativeToken()));
 
         rewardToken.mint(1e24);
         rewardToken.transfer(address(lottery), 1e24);

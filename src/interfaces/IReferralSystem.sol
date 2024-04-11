@@ -71,4 +71,6 @@ interface IReferralSystem {
     /// @return minimumEligibleReferrals Calculate the minimum eligible referrals that are needed for the referrer to be
     /// rewarded
     function minimumEligibleReferrals(uint128 drawId) external view returns (uint256 minimumEligibleReferrals);
+
+    function pointsToken() external view returns (IERC20);
 }

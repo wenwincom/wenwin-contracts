@@ -85,7 +85,7 @@ contract LotteryMathTest is Test {
         ticketsSold = bound(ticketsSold, 1, 1e12);
         assertEq(
             (ticketsSold * ticketPrice) / 5,
-            LotteryMath.calculateRewards(ticketPrice, ticketsSold, LotteryRewardType.STAKING)
+            LotteryMath.calculateRewards(ticketPrice, ticketsSold, LotteryRewardType.STANDARD)
         );
     }
 
