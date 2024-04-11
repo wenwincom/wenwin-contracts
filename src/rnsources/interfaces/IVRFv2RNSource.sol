@@ -2,7 +2,7 @@
 // slither-disable-next-line solc-version
 pragma solidity ^0.8.7;
 
-import "src/interfaces/IRNSource.sol";
+import { IRNSource } from "src/rnsources/interfaces/IRNSource.sol";
 
 /// @dev Thrown if a wrong count of random numbers is received
 /// @param requestId id of the request for random number

@@ -3,8 +3,8 @@
 pragma solidity ^0.8.7;
 
 import "@chainlink/contracts/src/v0.8/VRFV2WrapperConsumerBase.sol";
-import "src/interfaces/IVRFv2RNSource.sol";
-import "src/RNSourceBase.sol";
+import "src/rnsources/interfaces/IVRFv2RNSource.sol";
+import "src/rnsources/RNSourceBase.sol";
 
 contract VRFv2RNSource is IVRFv2RNSource, RNSourceBase, VRFV2WrapperConsumerBase {
     uint16 public immutable override requestConfirmations;

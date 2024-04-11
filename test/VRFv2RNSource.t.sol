@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "src/VRFv2RNSource.sol";
+import "src/rnsources/VRFv2RNSource.sol";
 
 contract VRFv2RNSourceTest is Test {
     address public constant AUTHORIZED_CONSUMER = address(192_929_292);

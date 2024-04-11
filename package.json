@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "devDependencies": {
-    "husky": "^8.0.2",
-    "lint-staged": "^13.0.3",
-    "prettier": "^2.7.1",
-    "solhint": "^3.3.7"
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "solhint": "^4.5.2"
   },
   "scripts": {
     "echidna-assertion": "echidna-test . --contract LotteryEchidna --config echidna.assertion.config.yaml",

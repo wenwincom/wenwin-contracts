@@ -16,6 +16,7 @@ solc_version = "0.8.19"
 
 [rpc_endpoints]
 goerli = "${GOERLI_RPC_URL}"
+base = "${BASE_RPC_URL}"
 localhost = "http://localhost:8545"
 
 [etherscan]

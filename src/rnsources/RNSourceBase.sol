@@ -2,7 +2,7 @@
 // slither-disable-next-line solc-version
 pragma solidity 0.8.19;
 
-import "src/interfaces/IRNSource.sol";
+import "src/rnsources/interfaces/IRNSource.sol";
 
 abstract contract RNSourceBase is IRNSource {
     address internal immutable authorizedConsumer;

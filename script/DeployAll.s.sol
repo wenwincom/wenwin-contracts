@@ -20,7 +20,7 @@ contract DeployAllScript is Script, LotteryConfig, ReferralSystemConfig, RewardT
         (uint256 playerRewardsFirstDraw, uint256 decrease, uint256[] memory referrerRewards) = getLotteryRewardsData();
         Lottery lottery = getLottery(token, playerRewardsFirstDraw, decrease, referrerRewards);
 
-        lottery.initSource(getRNSource(address(lottery)));
+        lottery.initSource(getVRFv2RNSource(address(lottery)));
 
         vm.stopBroadcast();
 

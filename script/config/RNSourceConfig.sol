@@ -3,12 +3,12 @@
 pragma solidity 0.8.19;
 
 import "forge-std/Script.sol";
-import "src/RNSourceController.sol";
-import "src/VRFv2RNSource.sol";
+import { API3DaoRNSource } from "src/rnsources/API3DaoRNSource.sol";
+import { VRFv2RNSource } from "src/rnsources/VRFv2RNSource.sol";
 import "test/RNSource.sol";
 
 contract RNSourceConfig is Script {
-    function getRNSource(address authorizedConsumer) internal returns (IRNSource rnSource) {
+    function getVRFv2RNSource(address authorizedConsumer) internal returns (IRNSource rnSource) {
         address vrfWrapper = vm.envAddress("VRFv2_WRAPPER_ADDRESS");
         address linkToken = vm.envAddress("VRFv2_LINK_TOKEN_ADDRESS");
 
@@ -17,12 +17,24 @@ contract RNSourceConfig is Script {
         } else {
             uint16 maxAttempts = uint16(vm.envUint("VRFv2_MAX_ATTEMPTS"));
             uint32 gasLimit = uint32(vm.envUint("VRFv2_GAS_LIMIT"));
-            rnSource = new VRFv2RNSource(
-                authorizedConsumer,
-                linkToken,
-                vrfWrapper,
-                maxAttempts,
-                gasLimit
+            rnSource = new VRFv2RNSource(authorizedConsumer, linkToken, vrfWrapper, maxAttempts, gasLimit);
+        }
+    }
+
+    function getAPI3DaoRNSource(address authorizedConsumer) internal returns (IRNSource rnSource) {
+        address _airnodeRrp = vm.envAddress("API3DAO_AIRNODE_RRP");
+        address _airnodeProvider = vm.envAddress("API3DAO_AIRNODE_PROVIDER");
+        bytes32 _endPointIdUint256 = vm.envBytes32("API3DAO_END_POINT_ID_UINT256");
+        address _sponsorWallet = vm.envAddress("API3DAO_SPONSOR_WALLET");
+
+        if (
+            _airnodeRrp == address(0) || _airnodeProvider == address(0) || _endPointIdUint256 == "0x0"
+                || _sponsorWallet == address(0)
+        ) {
+            rnSource = new RNSource(authorizedConsumer);
+        } else {
+            rnSource = new API3DaoRNSource(
+                authorizedConsumer, _airnodeRrp, _airnodeProvider, _endPointIdUint256, _sponsorWallet
             );
         }
     }

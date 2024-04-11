@@ -2,7 +2,7 @@
 // slither-disable-next-line solc-version
 pragma solidity 0.8.19;
 
-import "src/interfaces/IRNSource.sol";
+import { IRNSource, IRNSourceConsumer } from "src/rnsources/interfaces/IRNSource.sol";
 
 contract RNSourceConsumerMock is IRNSourceConsumer {
     event RNFulfilled(address indexed rnSource, uint256 randomNumber);
