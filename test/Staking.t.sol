@@ -146,29 +146,11 @@ contract StakingTest is LotteryTestBase {
 
     function testConstructorZeroAddress() public {
         vm.expectRevert(ZeroAddressInput.selector);
-        new Staking(
-            lottery,
-            IERC20(address(0)),
-            stakingToken,
-            "Staked LOT",
-            "stLOT"
-        );
+        new Staking(lottery, IERC20(address(0)), stakingToken, "Staked LOT", "stLOT");
         vm.expectRevert(ZeroAddressInput.selector);
-        new Staking(
-            lottery,
-            rewardToken,
-            IERC20(address(0)),
-            "Staked LOT",
-            "stLOT"
-        );
+        new Staking(lottery, rewardToken, IERC20(address(0)), "Staked LOT", "stLOT");
         vm.expectRevert(ZeroAddressInput.selector);
-        new Staking(
-            ILottery(address(0)),
-            rewardToken,
-            stakingToken,
-            "Staked LOT",
-            "stLOT"
-        );
+        new Staking(ILottery(address(0)), rewardToken, stakingToken, "Staked LOT", "stLOT");
     }
 
     function testStakeWithZeroAmount() public {

@@ -23,11 +23,7 @@ contract TestStakedTokenLock is Test {
         vm.mockCall(
             address(stakedToken), abi.encodeWithSelector(IStaking.rewardsToken.selector), abi.encode(rewardsToken)
         );
-        stakedTokenLock = new StakedTokenLock(
-            address(stakedToken),
-            DEPOSIT_DEADLINE,
-            LOCK_DURATION
-        );
+        stakedTokenLock = new StakedTokenLock(address(stakedToken), DEPOSIT_DEADLINE, LOCK_DURATION);
         vm.stopPrank();
     }
 

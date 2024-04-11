@@ -6,7 +6,7 @@ import "forge-std/Script.sol";
 import "script/config/RNSourceConfig.sol";
 import "src/rnsources/VRFv2RNSource.sol";
 
-contract VRFv2RNSourceScript is Script, RNSourceConfig {
+contract API3DaoRNSourceScript is Script, RNSourceConfig {
     // solhint-disable-next-line no-empty-blocks
     function setUp() public { }
 
@@ -15,7 +15,7 @@ contract VRFv2RNSourceScript is Script, RNSourceConfig {
         address authorizedConsumer = vm.envAddress("SOURCE_AUTHORIZED_CONSUMER_ADDRESS");
 
         vm.startBroadcast(deployerPrivateKey);
-        getVRFv2RNSource(authorizedConsumer);
+        getAPI3DaoRNSource(authorizedConsumer);
         vm.stopBroadcast();
     }
 }

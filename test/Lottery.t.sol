@@ -368,13 +368,7 @@ contract LotteryTest is LotteryTestBase {
         vm.expectRevert(TicketPriceZero.selector);
         new Lottery(
             LotterySetupParams(
-                rewardToken,
-                drawSchedule,
-                0,
-                SELECTION_SIZE,
-                SELECTION_MAX,
-                EXPECTED_PAYOUT,
-                fixedRewards
+                rewardToken, drawSchedule, 0, SELECTION_SIZE, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards
             ),
             playerRewardFirstDraw,
             playerRewardDecrease,
@@ -385,15 +379,7 @@ contract LotteryTest is LotteryTestBase {
 
         vm.expectRevert(SelectionSizeZero.selector);
         new Lottery(
-            LotterySetupParams(
-                rewardToken,
-                drawSchedule,
-                TICKET_PRICE,
-                0,
-                SELECTION_MAX,
-                EXPECTED_PAYOUT,
-                fixedRewards
-            ),
+            LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 0, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards),
             playerRewardFirstDraw,
             playerRewardDecrease,
             rewardsToReferrersPerDraw,
@@ -403,15 +389,17 @@ contract LotteryTest is LotteryTestBase {
 
         vm.expectRevert(SelectionSizeMaxTooBig.selector);
         new Lottery(
-            LotterySetupParams(
-                rewardToken,
-                drawSchedule,
-                TICKET_PRICE,
-                5,
-                120,
-                EXPECTED_PAYOUT,
-                fixedRewards
-            ),
+            LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 5, 120, EXPECTED_PAYOUT, fixedRewards),
+            playerRewardFirstDraw,
+            playerRewardDecrease,
+            rewardsToReferrersPerDraw,
+            MAX_RN_FAILED_ATTEMPTS,
+            MAX_RN_REQUEST_DELAY
+        );
+
+        vm.expectRevert(SelectionSizeTooBig.selector);
+        new Lottery(
+            LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 17, 20, EXPECTED_PAYOUT, fixedRewards),
             playerRewardFirstDraw,
             playerRewardDecrease,
             rewardsToReferrersPerDraw,
@@ -422,31 +410,7 @@ contract LotteryTest is LotteryTestBase {
         vm.expectRevert(SelectionSizeTooBig.selector);
         new Lottery(
             LotterySetupParams(
-                rewardToken,
-                drawSchedule,
-                TICKET_PRICE,
-                17,
-                20,
-                EXPECTED_PAYOUT,
-                fixedRewards
-            ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
-            MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
-        );
-
-        vm.expectRevert(SelectionSizeTooBig.selector);
-        new Lottery(
-            LotterySetupParams(
-                rewardToken,
-                drawSchedule,
-                TICKET_PRICE,
-                SELECTION_MAX,
-                SELECTION_MAX,
-                EXPECTED_PAYOUT,
-                fixedRewards
+                rewardToken, drawSchedule, TICKET_PRICE, SELECTION_MAX, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards
             ),
             playerRewardFirstDraw,
             playerRewardDecrease,
@@ -458,13 +422,7 @@ contract LotteryTest is LotteryTestBase {
         vm.expectRevert(InvalidExpectedPayout.selector);
         new Lottery(
             LotterySetupParams(
-                rewardToken,
-                drawSchedule,
-                TICKET_PRICE,
-                SELECTION_SIZE,
-                SELECTION_MAX,
-                TICKET_PRICE / 250,
-                fixedRewards
+                rewardToken, drawSchedule, TICKET_PRICE, SELECTION_SIZE, SELECTION_MAX, TICKET_PRICE / 250, fixedRewards
             ),
             playerRewardFirstDraw,
             playerRewardDecrease,
@@ -476,13 +434,7 @@ contract LotteryTest is LotteryTestBase {
         vm.expectRevert(InvalidExpectedPayout.selector);
         new Lottery(
             LotterySetupParams(
-                rewardToken,
-                drawSchedule,
-                TICKET_PRICE,
-                SELECTION_SIZE,
-                SELECTION_MAX,
-                TICKET_PRICE,
-                fixedRewards
+                rewardToken, drawSchedule, TICKET_PRICE, SELECTION_SIZE, SELECTION_MAX, TICKET_PRICE, fixedRewards
             ),
             playerRewardFirstDraw,
             playerRewardDecrease,
@@ -494,13 +446,7 @@ contract LotteryTest is LotteryTestBase {
         vm.expectRevert(ReferrerRewardsInvalid.selector);
         new Lottery(
             LotterySetupParams(
-                rewardToken,
-                drawSchedule,
-                TICKET_PRICE,
-                SELECTION_SIZE,
-                SELECTION_MAX,
-                EXPECTED_PAYOUT,
-                fixedRewards
+                rewardToken, drawSchedule, TICKET_PRICE, SELECTION_SIZE, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards
             ),
             playerRewardFirstDraw,
             playerRewardDecrease,

@@ -2,9 +2,9 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "src/VRFv2RNSource.sol";
-import "src/RNSourceBase.sol";
-import "src/interfaces/IRNSource.sol";
+import "src/rnsources/VRFv2RNSource.sol";
+import "src/rnsources/interfaces/IRNSource.sol";
+import "src/rnsources/RNSourceBase.sol";
 
 interface IRNSourceBaseHarness {
     function requestRandomnessFromUnderlyingSourceMock() external returns (uint256 requestId);

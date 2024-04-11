@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "src/interfaces/IRNSource.sol";
+import "src/rnsources/interfaces/IRNSource.sol";
 import "src/interfaces/IRNSourceController.sol";
 
 /// @dev A contract that controls the list of random number sources and dispatches random number requests to them.

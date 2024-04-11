@@ -94,15 +94,8 @@ contract Lottery is ILottery, Ticket, LotterySetup, ReferralSystem, RNSourceCont
         ReferralSystem(playerRewardFirstDraw, playerRewardDecreasePerDraw, rewardsToReferrersPerDraw)
         RNSourceController(maxRNFailedAttempts, maxRNRequestDelay)
     {
-        stakingRewardRecipient = address(
-            new Staking(
-            this,
-            lotterySetupParams.token,
-            nativeToken,
-            "Staked LOT",
-            "stLOT"
-            )
-        );
+        stakingRewardRecipient =
+            address(new Staking(this, lotterySetupParams.token, nativeToken, "Staked LOT", "stLOT"));
 
         nativeToken.safeTransfer(msg.sender, ILotteryToken(address(nativeToken)).INITIAL_SUPPLY());
     }

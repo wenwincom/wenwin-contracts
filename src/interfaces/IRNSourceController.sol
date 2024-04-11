@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "src/interfaces/IRNSource.sol";
+import "src/rnsources/interfaces/IRNSource.sol";
 
 /// @dev Provided Random number source is zero
 error RNSourceZeroAddress();
