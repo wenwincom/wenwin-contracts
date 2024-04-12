@@ -111,9 +111,6 @@ interface ILotterySetup {
     /// @return token Reward token address
     function rewardToken() external view returns (IERC20 token);
 
-    /// @return token Native token of the lottery. Used for staking and for referral rewards.
-    function nativeToken() external view returns (IERC20 token);
-
     /// @dev Price to pay for playing single game of lottery
     /// User pays it when registering the ticket for the game
     /// It is expressed in `rewardToken`

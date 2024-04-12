@@ -53,7 +53,7 @@ contract Staking is IStaking, ERC20 {
 
         uint256 ticketsSoldSinceUpdate = lottery.nextTicketId() - lastUpdateTicketId;
         uint256 unclaimedRewards =
-            LotteryMath.calculateRewards(lottery.ticketPrice(), ticketsSoldSinceUpdate, LotteryRewardType.STAKING);
+            LotteryMath.calculateRewards(lottery.ticketPrice(), ticketsSoldSinceUpdate, LotteryRewardType.STANDARD);
 
         return rewardPerTokenStored + (unclaimedRewards * 1e18 / _totalSupply);
     }
@@ -94,7 +94,7 @@ contract Staking is IStaking, ERC20 {
         if (reward > 0) {
             rewards[msg.sender] = 0;
             // slither-disable-next-line unused-return
-            lottery.claimRewards(LotteryRewardType.STAKING);
+            lottery.claimRewards(LotteryRewardType.STANDARD);
             rewardsToken.safeTransfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }

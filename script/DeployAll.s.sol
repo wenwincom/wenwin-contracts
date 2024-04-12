@@ -12,19 +12,17 @@ contract DeployAllScript is Script, LotteryConfig, ReferralSystemConfig, RewardT
     // solhint-disable-next-line no-empty-blocks
     function setUp() public { }
 
-    function run() public {
+    function run(address treasury) public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
         IERC20 token = getRewardToken();
-        (uint256 playerRewardsFirstDraw, uint256 decrease, uint256[] memory referrerRewards) = getLotteryRewardsData();
-        Lottery lottery = getLottery(token, playerRewardsFirstDraw, decrease, referrerRewards);
+        Lottery lottery = getLottery(token, treasury);
 
         lottery.initSource(getVRFv2RNSource(address(lottery)));
 
         vm.stopBroadcast();
 
         console.log("Lottery deployed at", address(lottery));
-        console.log("Lottery token deployed at", address(lottery.nativeToken()));
     }
 }

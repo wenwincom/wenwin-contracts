@@ -58,9 +58,6 @@ contract LotteryEchidna {
             }
         }
 
-        playerRewardFirstDraw = 961_538.5e18;
-        playerRewardDecrease = 9335.3e18;
-
         fixedRewards = new uint256[](SELECTION_SIZE);
         for (uint8 counter = 1; counter < SELECTION_SIZE; counter++) {
             fixedRewards[counter] = counter * TICKET_PRICE;
@@ -76,13 +73,10 @@ contract LotteryEchidna {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            address(0x121212),
             MAX_FAILED_ATTEMPTS,
             MAX_REQUEST_DELAY
         );
-        lotteryToken = ILotteryToken(address(lottery.nativeToken()));
 
         rnSource = new RNSourceEchidna(address(lottery));
         lottery.initSource(rnSource);
@@ -92,8 +86,6 @@ contract LotteryEchidna {
         rewardTokenLotteryBalance = 1e24; // solhint-disable-line reentrancy
         Hevm(HEVM_ADDRESS).warp(lottery.initialPotDeadline() + 1);
         lottery.finalizeInitialPotRaise();
-
-        stakingEchidna = new StakingEchidna(lottery, lotteryToken);
     }
 
     function buyTicket(uint120 ticketCombination, address frontend, address referrer) public virtual {
@@ -360,54 +352,6 @@ contract LotteryEchidna {
         }
     }
 
-    function claimReferralReward(uint128[] memory drawIds, uint8 numberOfDraws, uint256 randomNumber) external {
-        // Pre-condtion
-        uint256 senderBalanceBefore = lotteryToken.balanceOf(msg.sender);
-        uint256 lotteryBalanceBefore = lotteryToken.balanceOf(address(this));
-
-        // This if-else structure helps Echidna increase its corpus by artificially forcing it to execute later draws in
-        // future. It creates different flows for up to one year (test lottery is running on 30-day basis, thus ~12
-        // draws per year), up to two years, and more than three years.
-        if (numberOfDraws < 1) {
-            emit Log("claimReferralReward", numberOfDraws);
-        } else if (numberOfDraws < 12) {
-            emit Log("claimReferralReward", numberOfDraws);
-        } else if (numberOfDraws < 24) {
-            emit Log("claimReferralReward", numberOfDraws);
-        } else {
-            emit Log("claimReferralReward", numberOfDraws);
-        }
-        executeAndFulfillNumber_(numberOfDraws, randomNumber);
-
-        // Action
-        Hevm(HEVM_ADDRESS).prank(msg.sender);
-        try lottery.claimReferralReward(drawIds) returns (uint256 claimedReward) {
-            // Post-condition
-            if (claimedReward > 0) {
-                uint256 senderBalanceAfter = lotteryToken.balanceOf(msg.sender);
-                assert(senderBalanceBefore + claimedReward == senderBalanceAfter);
-                uint256 lotteryBalanceAfter = lotteryToken.balanceOf(address(this));
-                assert(lotteryBalanceBefore == lotteryBalanceAfter);
-                assert(lotteryBalanceAfter >= lotteryToken.INITIAL_SUPPLY());
-            }
-        } catch (bytes memory reason) {
-            // Reverts
-            bytes32 reasonInBytes32 = keccak256(reason);
-
-            // DrawNotFinished revert
-            uint128 currentDraw = lottery.currentDraw();
-            for (uint256 counter = 0; counter < drawIds.length; counter++) {
-                if (drawIds[counter] >= currentDraw) {
-                    assert(
-                        reasonInBytes32 == keccak256(abi.encodeWithSelector(DrawNotFinished.selector, drawIds[counter]))
-                    );
-                    return;
-                }
-            }
-            assert(false);
-        }
-    }
-
     function validateRewardWonType(uint128 drawId) internal view returns (bool) {
         uint8 selectionSize = lottery.selectionSize();
         if (lottery.winAmount(drawId, selectionSize) > 0) {
@@ -519,8 +463,8 @@ contract LotteryEchidna {
     function getRewardBalance(uint8 rewardType) private view returns (uint256) {
         if (rewardType == uint8(LotteryRewardType.FRONTEND)) {
             return rewardToken.balanceOf(msg.sender);
-        } else if (rewardType == uint8(LotteryRewardType.STAKING)) {
-            return rewardToken.balanceOf(lottery.stakingRewardRecipient());
+        } else if (rewardType == uint8(LotteryRewardType.STANDARD)) {
+            return rewardToken.balanceOf(lottery.feeRecipient());
         }
         assert(false);
         return (0);
