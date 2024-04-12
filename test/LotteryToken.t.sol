@@ -21,21 +21,45 @@ contract LotteryTokenTest is Test {
     }
 
     function testInflation(uint256 amount) public {
-        amount = bound(amount, 1, 1e30);
+        amount = bound(amount, 1, 2e26);
 
         uint256 initialSupply = lotteryToken.INITIAL_SUPPLY();
         assertEq(lotteryToken.totalSupply(), initialSupply);
 
         vm.prank(OWNER);
+        vm.warp(block.timestamp + 800 days);
         lotteryToken.mint(MINT_TO, amount);
 
         assertEq(lotteryToken.totalSupply(), initialSupply + amount);
         assertEq(lotteryToken.balanceOf(MINT_TO), (lotteryToken.totalSupply() - initialSupply));
     }
 
-    function testUnauthorizedMinting() public {
+    function testMinting() public {
         vm.prank(address(0x222));
-        vm.expectRevert(UnauthorizedMint.selector);
+        vm.expectRevert();
         lotteryToken.mint(MINT_TO, 1);
+
+        vm.prank(OWNER);
+        vm.expectRevert(MintTooEarly.selector);
+        lotteryToken.mint(MINT_TO, 2e26);
+
+        uint256 firstMintTime = block.timestamp + 2 * 365 days;
+        vm.warp(firstMintTime);
+        vm.prank(OWNER);
+        vm.expectRevert(InvalidMintAmount.selector);
+        lotteryToken.mint(MINT_TO, 2e26 + 1);
+
+        vm.warp(firstMintTime);
+        vm.prank(OWNER);
+        lotteryToken.mint(MINT_TO, 2e26);
+
+        vm.warp(firstMintTime + 360 days);
+        vm.prank(OWNER);
+        vm.expectRevert(MintTooEarly.selector);
+        lotteryToken.mint(MINT_TO, 2e26);
+
+        vm.warp(firstMintTime + 366 days);
+        vm.prank(OWNER);
+        lotteryToken.mint(MINT_TO, 2e26);
     }
 }

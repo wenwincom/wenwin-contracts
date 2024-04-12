@@ -22,11 +22,12 @@ contract StakingTest is LotteryTestBase {
         staking = new Staking(lottery, lottery.rewardToken(), stakingToken, "stWW", "stWW");
         vm.prank(rewardsRecipient);
         lottery.changeFeeRecipient(address(staking));
+
+        vm.prank(OWNER);
+        stakingToken.transfer(STAKER, 10_000);
     }
 
     function testGetRewardsSingleStaker() public {
-        vm.prank(OWNER);
-        stakingToken.mint(STAKER, 1);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
@@ -40,16 +41,14 @@ contract StakingTest is LotteryTestBase {
 
     function testGetRewardsMultipleStakersStakePostIncome() public {
         address staker2 = address(420);
-        vm.prank(OWNER);
-        stakingToken.mint(STAKER, 1);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
         buySameTickets(lottery.currentDraw(), uint120(0x0F), address(0), 2);
-
         vm.stopPrank();
+
         vm.prank(OWNER);
-        stakingToken.mint(staker2, 1);
+        stakingToken.transfer(staker2, 1);
         vm.startPrank(staker2);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
@@ -67,16 +66,14 @@ contract StakingTest is LotteryTestBase {
 
     function testGetRewardsMultipleStakersSplit() public {
         address staker2 = address(420);
-        vm.prank(OWNER);
-        stakingToken.mint(STAKER, 1);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
         buySameTickets(lottery.currentDraw(), uint120(0x0F), address(0), 2);
-
         vm.stopPrank();
+
         vm.prank(OWNER);
-        stakingToken.mint(staker2, 1);
+        stakingToken.transfer(staker2, 1);
         vm.startPrank(staker2);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
@@ -98,8 +95,6 @@ contract StakingTest is LotteryTestBase {
 
     function testExit() public {
         uint256 stakeAmount = 1;
-        vm.prank(OWNER);
-        stakingToken.mint(STAKER, stakeAmount);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), stakeAmount);
         staking.stake(stakeAmount);
@@ -114,8 +109,6 @@ contract StakingTest is LotteryTestBase {
 
     function testTransferDoesNotTransferRewards() public {
         address staker2 = address(420);
-        vm.prank(OWNER);
-        stakingToken.mint(STAKER, 1);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
@@ -131,8 +124,6 @@ contract StakingTest is LotteryTestBase {
 
     function testTransferFromDoesNotTransferRewards() public {
         address staker2 = address(420);
-        vm.prank(OWNER);
-        stakingToken.mint(STAKER, 1);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
@@ -171,8 +162,6 @@ contract StakingTest is LotteryTestBase {
 
     function testWithdrawSendsTokens() public {
         uint256 amount = 123;
-        vm.prank(OWNER);
-        stakingToken.mint(STAKER, amount);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), amount);
         staking.stake(amount);
