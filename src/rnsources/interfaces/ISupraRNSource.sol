@@ -5,6 +5,9 @@ import { ISupraRouter } from "src/rnsources/interfaces/external/ISupraRouter.sol
 import { IRNSource } from "src/rnsources/interfaces/IRNSource.sol";
 
 interface ISupraRNSource is IRNSource {
+    /// @dev Thrown when request confirmations is not between 1 to 20
+    error RequestConfirmationsIsNotInScope(uint256 requestConfirmations);
+
     /// @dev Thrown when supraRouter not call callback function
     error SupraRouterIsNotMsgSender(uint256 requestId);
 

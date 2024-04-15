@@ -10,6 +10,8 @@ contract SupraRNSource is RNSourceBase, ISupraRNSource {
     address public immutable override clientWalletAddress;
     uint8 public immutable override requestConfirmations;
 
+    uint8 private constant RNG_COUNT = 1;
+
     constructor(
         address _authorizedConsumer,
         address _supraRouter,
@@ -20,16 +22,16 @@ contract SupraRNSource is RNSourceBase, ISupraRNSource {
     {
         supraRouter = ISupraRouter(_supraRouter);
         clientWalletAddress = _clientWalletAddress;
+        if (_requestConfirmations == 0 || _requestConfirmations > 20) {
+            revert RequestConfirmationsIsNotInScope(_requestConfirmations);
+        }
         requestConfirmations = _requestConfirmations;
     }
 
     /// @dev Assumes the contract is funded sufficiently
     function requestRandomnessFromUnderlyingSource() internal override returns (uint256 requestId) {
-        //Requesting 1 random numbers
-        uint8 rngCount = 1;
-
         requestId = supraRouter.generateRequest(
-            "fulfill(uint256,uint256[])", rngCount, requestConfirmations, clientWalletAddress
+            "fulfill(uint256,uint256[])", RNG_COUNT, requestConfirmations, clientWalletAddress
         );
     }
 
@@ -38,7 +40,7 @@ contract SupraRNSource is RNSourceBase, ISupraRNSource {
             revert SupraRouterIsNotMsgSender(_requestId);
         }
 
-        if (_rngList.length != 1) {
+        if (_rngList.length != RNG_COUNT) {
             revert WrongRandomNumberCountReceived(_requestId, _rngList.length);
         }
 
