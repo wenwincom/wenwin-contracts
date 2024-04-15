@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 
 import "forge-std/Script.sol";
 import { API3DaoRNSource } from "src/rnsources/API3DaoRNSource.sol";
+import { SupraRNSource } from "src/rnsources/SupraRNSource.sol";
 import { VRFv2RNSource } from "src/rnsources/VRFv2RNSource.sol";
 import "test/RNSource.sol";
 
@@ -36,6 +37,19 @@ contract RNSourceConfig is Script {
             rnSource = new API3DaoRNSource(
                 authorizedConsumer, _airnodeRrp, _airnodeProvider, _endPointIdUint256, _sponsorWallet
             );
+        }
+    }
+
+    function getSupraRNSource(address authorizedConsumer) internal returns (IRNSource rnSource) {
+        address supraRouter = vm.envAddress("SUPRA_ROUTER");
+        address supraClientWalletAddress = vm.envAddress("SUPRA_CLIENT_WALLET_ADDRESS");
+        uint8 supraRequestConfirmations = uint8(vm.envUint("SUPRA_REQUEST_CONFIRMATIONS"));
+
+        if (supraRouter == address(0) || supraClientWalletAddress == address(0)) {
+            rnSource = new RNSource(authorizedConsumer);
+        } else {
+            rnSource =
+                new SupraRNSource(authorizedConsumer, supraRouter, supraClientWalletAddress, supraRequestConfirmations);
         }
     }
 }
