@@ -7,6 +7,12 @@ import "src/interfaces/IRNSourceController.sol";
 import "src/interfaces/ITicket.sol";
 import "src/interfaces/IReferralSystem.sol";
 
+/// @dev Invalid caller to the function.
+error Unauthorized();
+
+/// @dev Zero address was provided.
+error ZeroAddressProvided();
+
 /// @dev Invalid ticket is provided. This means the selection count is not `selectionSize`,
 /// or one of the numbers is not in range [1, selectionMax].
 error InvalidTicket();
@@ -40,14 +46,14 @@ error DrawNotFinished(uint128 drawId);
 
 /// @dev List of implemented rewards.
 /// @param FRONTEND Reward paid to frontend operators for each ticket sold.
-/// @param STAKING Reward for stakers of LotteryToken.
+/// @param STANDARD Standard lottery fee.
 enum LotteryRewardType {
     FRONTEND,
-    STAKING
+    STANDARD
 }
 
 /// @dev Interface that decentralized lottery implements
-interface ILottery is ITicket, ILotterySetup, IRNSourceController, IReferralSystem {
+interface ILottery is ITicket, ILotterySetup, IRNSourceController {
     /// @dev New ticket has been purchased by `user` for `drawId`.
     /// @param currentDraw Currently active draw.
     /// @param ticketId Ticket unique identifier.
@@ -88,8 +94,8 @@ interface ILottery is ITicket, ILotterySetup, IRNSourceController, IReferralSyst
     /// @param winningTicket Winning ticket represented as packed uint120.
     event FinishedExecutingDraw(uint128 indexed drawId, uint256 indexed randomNumber, uint120 indexed winningTicket);
 
-    /// @return rewardRecipient Staking fee recipient.
-    function stakingRewardRecipient() external view returns (address rewardRecipient);
+    /// @return feeRecipient Staking fee recipient.
+    function feeRecipient() external view returns (address feeRecipient);
 
     /// @return ticketId Next ticket id to be minted after the last draw was finalized.
     function lastDrawFinalTicketId() external view returns (uint256 ticketId);
@@ -126,6 +132,10 @@ interface ILottery is ITicket, ILotterySetup, IRNSourceController, IReferralSyst
     /// @param drawId Unique identifier of a draw we are querying.
     /// @return winningCombination Actual winning combination for a draw.
     function winningTicket(uint128 drawId) external view returns (uint120 winningCombination);
+
+    /// @dev Changes fee recipient address. msg.sender needs to be old fee recipient.
+    /// @param newFeeRecipient Address of the new fee recipient.
+    function changeFeeRecipient(address newFeeRecipient) external;
 
     /// @dev Buy set of tickets for the upcoming lotteries.
     /// `msg.sender` pays `ticketPrice` for each ticket and provides combination of numbers for each ticket.

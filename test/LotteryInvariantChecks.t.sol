@@ -39,13 +39,13 @@ contract LotteryInvariantChecksTest is LotteryTestBase {
     }
 
     function unclaimedRewards() internal returns (uint256 totalUnclaimed) {
-        totalUnclaimed = lottery.unclaimedRewards(LotteryRewardType.STAKING);
+        totalUnclaimed = lottery.unclaimedRewards(LotteryRewardType.STANDARD);
         vm.prank(FRONTEND_ADDRESS);
         totalUnclaimed += lottery.unclaimedRewards(LotteryRewardType.FRONTEND);
     }
 
     function claimRewards() internal {
-        lottery.claimRewards(LotteryRewardType.STAKING);
+        lottery.claimRewards(LotteryRewardType.STANDARD);
         vm.prank(FRONTEND_ADDRESS);
         lottery.claimRewards(LotteryRewardType.FRONTEND);
         assertEq(unclaimedRewards(), 0);

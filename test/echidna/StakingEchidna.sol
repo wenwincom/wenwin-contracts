@@ -26,7 +26,7 @@ contract StakingEchidna {
     constructor(ILottery lottery_, ILotteryToken stakingToken_) {
         lottery = lottery_;
         rewardToken = lottery_.rewardToken();
-        stakingContract = IStaking(lottery.stakingRewardRecipient());
+        stakingContract = IStaking(lottery.feeRecipient());
         stakingToken = stakingToken_;
     }
 

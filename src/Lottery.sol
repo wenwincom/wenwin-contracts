@@ -14,11 +14,11 @@ import "src/TicketUtils.sol";
 /// It runs `selectionSize` / `selectionMax` type of lottery.
 /// User buys the ticket by selecting total of `selectionSize` numbers from [1, selectionMax] range.
 /// Ticket price is paid each time user buys a ticket.
-/// Part of the price is staking reward, which is claimable to `stakingRewardRecipient`.
+/// Part of the price is fee, which is claimable to `feeRecipient`.
 /// Part of the price is frontend reward which is claimable by frontend operators selling the ticket.
 /// All fees, as well as rewards are paid in `rewardToken`.
 /// All prizes are dynamic and dependant on the actual ticket sales.
-contract Lottery is ILottery, Ticket, LotterySetup, ReferralSystem, RNSourceController {
+contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
     using SafeERC20 for IERC20;
     using TicketUtils for uint256;
 
@@ -26,7 +26,7 @@ contract Lottery is ILottery, Ticket, LotterySetup, ReferralSystem, RNSourceCont
     mapping(address => uint256) private frontendDueTicketSales;
     mapping(uint128 => mapping(uint120 => uint256)) private unclaimedCount;
 
-    address public immutable override stakingRewardRecipient;
+    address public override feeRecipient;
 
     uint256 public override lastDrawFinalTicketId;
 
@@ -75,29 +75,31 @@ contract Lottery is ILottery, Ticket, LotterySetup, ReferralSystem, RNSourceCont
 
     /// @dev Constructs a new lottery contract.
     /// @param lotterySetupParams Setup parameter for the lottery.
-    /// @param playerRewardFirstDraw Rewards for players in native token for first draw.
-    /// @param playerRewardDecreasePerDraw Decrease of rewards for players per each draw.
-    /// @param rewardsToReferrersPerDraw Percentage of native token rewards going to players.
     /// @param maxRNFailedAttempts Maximum number of consecutive failed attempts for random number source.
     /// @param maxRNRequestDelay Time considered as maximum delay for RN request.
     // solhint-disable-next-line code-complexity
     constructor(
         LotterySetupParams memory lotterySetupParams,
-        uint256 playerRewardFirstDraw,
-        uint256 playerRewardDecreasePerDraw,
-        uint256[] memory rewardsToReferrersPerDraw,
+        address feeRecipient_,
         uint256 maxRNFailedAttempts,
         uint256 maxRNRequestDelay
     )
         Ticket()
         LotterySetup(lotterySetupParams)
-        ReferralSystem(playerRewardFirstDraw, playerRewardDecreasePerDraw, rewardsToReferrersPerDraw)
         RNSourceController(maxRNFailedAttempts, maxRNRequestDelay)
     {
-        stakingRewardRecipient =
-            address(new Staking(this, lotterySetupParams.token, nativeToken, "Staked LOT", "stLOT"));
+        feeRecipient = feeRecipient_;
+    }
 
-        nativeToken.safeTransfer(msg.sender, ILotteryToken(address(nativeToken)).INITIAL_SUPPLY());
+    function changeFeeRecipient(address newFeeRecipient) external {
+        if (msg.sender != feeRecipient) {
+            revert Unauthorized();
+        }
+        if (newFeeRecipient == address(0)) {
+            revert ZeroAddressProvided();
+        }
+        claimRewards(LotteryRewardType.STANDARD);
+        feeRecipient = newFeeRecipient;
     }
 
     function buyTickets(
@@ -118,7 +120,6 @@ contract Lottery is ILottery, Ticket, LotterySetup, ReferralSystem, RNSourceCont
         for (uint256 i = 0; i < drawIds.length; ++i) {
             ticketIds[i] = registerTicket(drawIds[i], tickets[i], frontend, referrer);
         }
-        referralRegisterTickets(currentDraw, referrer, msg.sender, tickets.length);
         frontendDueTicketSales[frontend] += tickets.length;
         rewardToken.safeTransferFrom(msg.sender, address(this), ticketPrice * tickets.length);
     }
@@ -141,8 +142,8 @@ contract Lottery is ILottery, Ticket, LotterySetup, ReferralSystem, RNSourceCont
         rewards = LotteryMath.calculateRewards(ticketPrice, dueTicketsSold, rewardType);
     }
 
-    function claimRewards(LotteryRewardType rewardType) external override returns (uint256 claimedAmount) {
-        address beneficiary = (rewardType == LotteryRewardType.FRONTEND) ? msg.sender : stakingRewardRecipient;
+    function claimRewards(LotteryRewardType rewardType) public override returns (uint256 claimedAmount) {
+        address beneficiary = (rewardType == LotteryRewardType.FRONTEND) ? msg.sender : feeRecipient;
         claimedAmount = LotteryMath.calculateRewards(ticketPrice, dueTicketsSoldAndReset(beneficiary), rewardType);
 
         emit ClaimedRewards(beneficiary, claimedAmount, rewardType);
@@ -217,9 +218,7 @@ contract Lottery is ILottery, Ticket, LotterySetup, ReferralSystem, RNSourceCont
         winningTicket[drawFinalized] = _winningTicket;
         drawExecutionInProgress = false;
 
-        uint256 ticketsSoldDuringDraw = nextTicketId - lastDrawFinalTicketId;
         lastDrawFinalTicketId = nextTicketId;
-        referralDrawFinalize(drawFinalized, ticketsSoldDuringDraw);
 
         emit FinishedExecutingDraw(drawFinalized, randomNumber, _winningTicket);
     }
@@ -240,7 +239,7 @@ contract Lottery is ILottery, Ticket, LotterySetup, ReferralSystem, RNSourceCont
     }
 
     function dueTicketsSoldAndReset(address beneficiary) private returns (uint256 dueTickets) {
-        if (beneficiary == stakingRewardRecipient) {
+        if (beneficiary == feeRecipient) {
             dueTickets = nextTicketId - claimedStakingRewardAtTicketId;
             claimedStakingRewardAtTicketId = nextTicketId;
         } else {
@@ -267,15 +266,5 @@ contract Lottery is ILottery, Ticket, LotterySetup, ReferralSystem, RNSourceCont
             uint256 unclaimedJackpotTickets = unclaimedCount[drawId][winningTicket[drawId]];
             currentNetProfit += int256(unclaimedJackpotTickets * winAmount[drawId][selectionSize]);
         }
-    }
-
-    function requireFinishedDraw(uint128 drawId) internal view override {
-        if (drawId >= currentDraw) {
-            revert DrawNotFinished(drawId);
-        }
-    }
-
-    function mintNativeTokens(address mintTo, uint256 amount) internal override {
-        ILotteryToken(address(nativeToken)).mint(mintTo, amount);
     }
 }

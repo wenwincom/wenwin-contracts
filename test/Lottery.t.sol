@@ -21,9 +21,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -68,9 +66,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -160,15 +156,15 @@ contract LotteryTest is LotteryTestBase {
         buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
         vm.stopPrank();
 
-        assertEq(lottery.unclaimedRewards(LotteryRewardType.STAKING), TICKET_FEE);
+        assertEq(lottery.unclaimedRewards(LotteryRewardType.STANDARD), TICKET_FEE);
         vm.prank(FRONTEND_ADDRESS);
         assertEq(lottery.unclaimedRewards(LotteryRewardType.FRONTEND), TICKET_FRONTEND_FEE);
 
-        address stakingRewardRecipient = lottery.stakingRewardRecipient();
-        uint256 preBalance = rewardToken.balanceOf(stakingRewardRecipient);
-        lottery.claimRewards(LotteryRewardType.STAKING);
-        assertEq(lottery.unclaimedRewards(LotteryRewardType.STAKING), 0);
-        assertEq(rewardToken.balanceOf(stakingRewardRecipient), preBalance + TICKET_FEE);
+        address feeRecipient = lottery.feeRecipient();
+        uint256 preBalance = rewardToken.balanceOf(feeRecipient);
+        lottery.claimRewards(LotteryRewardType.STANDARD);
+        assertEq(lottery.unclaimedRewards(LotteryRewardType.STANDARD), 0);
+        assertEq(rewardToken.balanceOf(feeRecipient), preBalance + TICKET_FEE);
 
         preBalance = rewardToken.balanceOf(FRONTEND_ADDRESS);
         vm.startPrank(FRONTEND_ADDRESS);
@@ -176,6 +172,32 @@ contract LotteryTest is LotteryTestBase {
         assertEq(lottery.unclaimedRewards(LotteryRewardType.FRONTEND), 0);
         vm.stopPrank();
         assertEq(rewardToken.balanceOf(FRONTEND_ADDRESS), preBalance + TICKET_FRONTEND_FEE);
+    }
+
+    function testChangeFeeRecipient() public {
+        vm.startPrank(USER);
+        rewardToken.mint(TICKET_PRICE);
+        rewardToken.approve(address(lottery), TICKET_PRICE);
+        buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
+        vm.stopPrank();
+
+        assertEq(lottery.unclaimedRewards(LotteryRewardType.STANDARD), TICKET_FEE);
+
+        address feeRecipient = lottery.feeRecipient();
+        uint256 preBalance = rewardToken.balanceOf(feeRecipient);
+
+        vm.prank(feeRecipient);
+        lottery.changeFeeRecipient(address(1234));
+        assertEq(lottery.feeRecipient(), address(1234));
+        assertEq(lottery.unclaimedRewards(LotteryRewardType.STANDARD), 0);
+        assertEq(rewardToken.balanceOf(feeRecipient), preBalance + TICKET_FEE);
+
+        vm.expectRevert(Unauthorized.selector);
+        lottery.changeFeeRecipient(address(0));
+
+        vm.expectRevert(ZeroAddressProvided.selector);
+        vm.prank(address(1234));
+        lottery.changeFeeRecipient(address(0));
     }
 
     function testExecuteDraw() public {
@@ -322,9 +344,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -340,9 +360,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -358,9 +376,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 fixedRewards
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -370,9 +386,7 @@ contract LotteryTest is LotteryTestBase {
             LotterySetupParams(
                 rewardToken, drawSchedule, 0, SELECTION_SIZE, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -380,9 +394,7 @@ contract LotteryTest is LotteryTestBase {
         vm.expectRevert(SelectionSizeZero.selector);
         new Lottery(
             LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 0, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -390,9 +402,7 @@ contract LotteryTest is LotteryTestBase {
         vm.expectRevert(SelectionSizeMaxTooBig.selector);
         new Lottery(
             LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 5, 120, EXPECTED_PAYOUT, fixedRewards),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -400,9 +410,7 @@ contract LotteryTest is LotteryTestBase {
         vm.expectRevert(SelectionSizeTooBig.selector);
         new Lottery(
             LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 17, 20, EXPECTED_PAYOUT, fixedRewards),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -412,9 +420,7 @@ contract LotteryTest is LotteryTestBase {
             LotterySetupParams(
                 rewardToken, drawSchedule, TICKET_PRICE, SELECTION_MAX, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -424,9 +430,7 @@ contract LotteryTest is LotteryTestBase {
             LotterySetupParams(
                 rewardToken, drawSchedule, TICKET_PRICE, SELECTION_SIZE, SELECTION_MAX, TICKET_PRICE / 250, fixedRewards
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -436,21 +440,7 @@ contract LotteryTest is LotteryTestBase {
             LotterySetupParams(
                 rewardToken, drawSchedule, TICKET_PRICE, SELECTION_SIZE, SELECTION_MAX, TICKET_PRICE, fixedRewards
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
-            MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
-        );
-
-        vm.expectRevert(ReferrerRewardsInvalid.selector);
-        new Lottery(
-            LotterySetupParams(
-                rewardToken, drawSchedule, TICKET_PRICE, SELECTION_SIZE, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards
-            ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            new uint256[](0),
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -466,9 +456,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 new uint256[](1)
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -486,9 +474,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 invalidFixedRewards
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );
@@ -506,9 +492,7 @@ contract LotteryTest is LotteryTestBase {
                 EXPECTED_PAYOUT,
                 invalidFixedRewards
             ),
-            playerRewardFirstDraw,
-            playerRewardDecrease,
-            rewardsToReferrersPerDraw,
+            rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY
         );

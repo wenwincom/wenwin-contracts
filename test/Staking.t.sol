@@ -4,23 +4,30 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./LotteryTestBase.sol";
 import "../src/Lottery.sol";
+import "../src/LotteryToken.sol";
+import "../src/staking/Staking.sol";
 import "./TestToken.sol";
 
 contract StakingTest is LotteryTestBase {
     IStaking public staking;
     address public constant STAKER = address(69);
+    address public constant OWNER = address(70);
 
     ILotteryToken public stakingToken;
 
     function setUp() public override {
         super.setUp();
-        staking = IStaking(lottery.stakingRewardRecipient());
-        stakingToken = ILotteryToken(address(lottery.nativeToken()));
+        vm.prank(OWNER);
+        stakingToken = new LotteryToken();
+        staking = new Staking(lottery, lottery.rewardToken(), stakingToken, "stWW", "stWW");
+        vm.prank(rewardsRecipient);
+        lottery.changeFeeRecipient(address(staking));
+
+        vm.prank(OWNER);
+        stakingToken.transfer(STAKER, 10_000);
     }
 
     function testGetRewardsSingleStaker() public {
-        vm.prank(address(lottery));
-        stakingToken.mint(STAKER, 1);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
@@ -34,16 +41,14 @@ contract StakingTest is LotteryTestBase {
 
     function testGetRewardsMultipleStakersStakePostIncome() public {
         address staker2 = address(420);
-        vm.prank(address(lottery));
-        stakingToken.mint(STAKER, 1);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
         buySameTickets(lottery.currentDraw(), uint120(0x0F), address(0), 2);
-
         vm.stopPrank();
-        vm.prank(address(lottery));
-        stakingToken.mint(staker2, 1);
+
+        vm.prank(OWNER);
+        stakingToken.transfer(staker2, 1);
         vm.startPrank(staker2);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
@@ -61,16 +66,14 @@ contract StakingTest is LotteryTestBase {
 
     function testGetRewardsMultipleStakersSplit() public {
         address staker2 = address(420);
-        vm.prank(address(lottery));
-        stakingToken.mint(STAKER, 1);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
         buySameTickets(lottery.currentDraw(), uint120(0x0F), address(0), 2);
-
         vm.stopPrank();
-        vm.prank(address(lottery));
-        stakingToken.mint(staker2, 1);
+
+        vm.prank(OWNER);
+        stakingToken.transfer(staker2, 1);
         vm.startPrank(staker2);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
@@ -92,8 +95,6 @@ contract StakingTest is LotteryTestBase {
 
     function testExit() public {
         uint256 stakeAmount = 1;
-        vm.prank(address(lottery));
-        stakingToken.mint(STAKER, stakeAmount);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), stakeAmount);
         staking.stake(stakeAmount);
@@ -108,8 +109,6 @@ contract StakingTest is LotteryTestBase {
 
     function testTransferDoesNotTransferRewards() public {
         address staker2 = address(420);
-        vm.prank(address(lottery));
-        stakingToken.mint(STAKER, 1);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
@@ -125,8 +124,6 @@ contract StakingTest is LotteryTestBase {
 
     function testTransferFromDoesNotTransferRewards() public {
         address staker2 = address(420);
-        vm.prank(address(lottery));
-        stakingToken.mint(STAKER, 1);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), 1);
         staking.stake(1);
@@ -165,8 +162,6 @@ contract StakingTest is LotteryTestBase {
 
     function testWithdrawSendsTokens() public {
         uint256 amount = 123;
-        vm.prank(address(lottery));
-        stakingToken.mint(STAKER, amount);
         vm.startPrank(STAKER);
         stakingToken.approve(address(staking), amount);
         staking.stake(amount);

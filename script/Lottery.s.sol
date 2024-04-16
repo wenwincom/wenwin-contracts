@@ -12,13 +12,12 @@ contract LotteryScript is Script, LotteryConfig, ReferralSystemConfig {
     // solhint-disable-next-line no-empty-blocks
     function setUp() public { }
 
-    function run() public {
+    function run(address treasury) public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.broadcast(deployerPrivateKey);
 
         IERC20 token = IERC20(vm.envAddress("REWARD_TOKEN_ADDRESS"));
-        (uint256 playerRewardsFirstDraw, uint256 decrease, uint256[] memory referrerRewards) = getLotteryRewardsData();
-        getLottery(token, playerRewardsFirstDraw, decrease, referrerRewards);
+        getLottery(token, treasury);
 
         vm.stopBroadcast();
     }
