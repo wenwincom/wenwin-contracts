@@ -4,11 +4,9 @@ pragma solidity 0.8.19;
 
 import "forge-std/Script.sol";
 import "script/config/LotteryConfig.sol";
-import "script/config/ReferralSystemConfig.sol";
 import "src/Lottery.sol";
-import "test/TestToken.sol";
 
-contract LotteryScript is Script, LotteryConfig, ReferralSystemConfig {
+contract InitSourceAPI3DaoScript is Script, LotteryConfig {
     // solhint-disable-next-line no-empty-blocks
     function setUp() public { }
 
@@ -16,9 +14,9 @@ contract LotteryScript is Script, LotteryConfig, ReferralSystemConfig {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.broadcast(deployerPrivateKey);
 
-        IERC20 token = IERC20(vm.envAddress("REWARD_TOKEN_ADDRESS"));
-        getLottery(token);
+        ILottery lottery = ILottery(vm.envAddress("LOTTERY_DEPLOYED_ADDRESS"));
+        lottery.initSource(getAPI3DaoRNSource(address(lottery)));
 
-        //vm.stopBroadcast();
+        vm.stopBroadcast();
     }
 }
