@@ -4,7 +4,6 @@ pragma solidity 0.8.19;
 
 import "forge-std/Script.sol";
 import "script/config/RNSourceConfig.sol";
-import "src/rnsources/VRFv2RNSource.sol";
 
 contract API3DaoRNSourceScript is Script, RNSourceConfig {
     // solhint-disable-next-line no-empty-blocks
