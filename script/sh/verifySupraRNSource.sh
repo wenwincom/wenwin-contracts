@@ -1,0 +1,1 @@
+forge verify-contract 0x197b4F57817b654dde9CD72170545e39344c6942 src/rnsources/SupraRNSource.sol:SupraRNSource --constructor-args $(cast abi-encode "constructor(address,address,address,uint8)" 0xd71f42cFFf1Ad7E722f0785AFeE8da9aD902eB29 0x73970504Df8290E9A508676a0fbd1B7f4Bcb7f5a 0xd71f42cFFf1Ad7E722f0785AFeE8da9aD902eB29 10) --show-standard-json-input > SupraRNSource.json
