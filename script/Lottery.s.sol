@@ -14,11 +14,11 @@ contract LotteryScript is Script, LotteryConfig, ReferralSystemConfig {
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        vm.broadcast(deployerPrivateKey);
+        vm.startBroadcast(deployerPrivateKey);
 
         IERC20 token = IERC20(vm.envAddress("REWARD_TOKEN_ADDRESS"));
         getLottery(token);
 
-        //vm.stopBroadcast();
+        vm.stopBroadcast();
     }
 }
