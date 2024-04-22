@@ -106,6 +106,9 @@ interface ILotterySetup {
     /// @return bound Maximum base jackpot
     function jackpotBound() external view returns (uint256 bound);
 
+    /// @return maximumPot Maximum pot size for efficient lottery setup
+    function maxPot() external view returns (uint256 maximumPot);
+
     /// @dev Token to be used as reward token for the lottery
     /// It is used for both rewards and paying for tickets
     /// @return token Reward token address

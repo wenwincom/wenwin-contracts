@@ -184,6 +184,19 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
         rewardToken.safeTransfer(msg.sender, claimedAmount);
     }
 
+    function rescueTokens(IERC20 token, address to, uint256 amount) external onlyOwner {
+        uint256 maxToWithdraw = token.balanceOf(address(this));
+        if (token == rewardToken && currentDraw < LotteryMath.DRAWS_PER_YEAR) {
+            maxToWithdraw = maxToWithdraw > maxPot ? (maxToWithdraw - maxPot) : 0;
+        }
+
+        if (amount > maxToWithdraw) {
+            revert AmountToRescueTooBig(token, amount, maxToWithdraw);
+        }
+        token.transfer(to, amount);
+        emit TokenRescued(token, to, amount);
+    }
+
     /// @dev Registers the ticket in the system. To be called when user is buying the ticket.
     /// @param drawId Draw identifier ticket is bought for.
     /// @param ticket Combination packed as uint120.

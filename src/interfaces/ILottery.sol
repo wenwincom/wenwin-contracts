@@ -45,6 +45,12 @@ error NothingToClaim(uint256 ticketId);
 /// @param drawId Unique identifier for draw
 error DrawNotFinished(uint128 drawId);
 
+/// @dev Amount of tokens to rescue is to big.
+/// @param token Token contract address.
+/// @param amount Amount of tokens tried to rescue.
+/// @param maxToWithdraw Maximum number of tokens available for withdrawal.
+error AmountToRescueTooBig(IERC20 token, uint256 amount, uint256 maxToWithdraw);
+
 /// @dev Interface that decentralized lottery implements
 interface ILottery is ITicket, ILotterySetup, IRNSourceController, IFeeCollector {
     /// @dev New ticket has been purchased by `user` for `drawId`.
@@ -85,6 +91,12 @@ interface ILottery is ITicket, ILotterySetup, IRNSourceController, IFeeCollector
     /// @param randomNumber Random number used for reconstructing ticket.
     /// @param winningTicket Winning ticket represented as packed uint120.
     event FinishedExecutingDraw(uint128 indexed drawId, uint256 indexed randomNumber, uint120 indexed winningTicket);
+
+    /// @dev Tokens rescued from the contract.
+    /// @param token Token contract address.
+    /// @param to Address tokens were rescued to.
+    /// @param amount Amount of tokens rescued.
+    event TokenRescued(IERC20 token, address to, uint256 amount);
 
     /// @return ticketId Next ticket id to be minted after the last draw was finalized.
     function lastDrawFinalTicketId() external view returns (uint256 ticketId);
@@ -164,4 +176,13 @@ interface ILottery is ITicket, ILotterySetup, IRNSourceController, IFeeCollector
 
     /// @dev Starts draw process. Requests a random number from `randomNumberSource`.
     function executeDraw() external;
+
+    /// @dev Rescues tokens from the contract. In case of rewardToken, rescue amount is limited.
+    /// Reward token can be rescued if:
+    ///  - more than 1 year of draws passed
+    ///  - balance of the contract is bigger than MAX_POT
+    /// @param token Address of the token contract.
+    /// @param to Address to send tokens to.
+    /// @param amount Amount of tokens to rescue.
+    function rescueTokens(IERC20 token, address to, uint256 amount) external;
 }
