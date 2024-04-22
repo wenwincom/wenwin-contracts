@@ -328,6 +328,51 @@ contract LotteryTest is LotteryTestBase {
         assertEq(claimable1, 0);
     }
 
+    function testRescueTokens() public {
+        TestToken token = new TestToken();
+
+        vm.startPrank(USER);
+        token.mint(10);
+        token.transfer(address(lottery), 10);
+        vm.stopPrank();
+
+        vm.startPrank(lottery.owner());
+        vm.expectRevert(abi.encodeWithSelector(AmountToRescueTooBig.selector, token, 11, 10));
+        lottery.rescueTokens(token, USER, 11);
+
+        lottery.rescueTokens(token, USER, 10);
+        assertEq(token.balanceOf(USER), 10);
+
+        vm.expectRevert(abi.encodeWithSelector(AmountToRescueTooBig.selector, rewardToken, 1, 0));
+        lottery.rescueTokens(rewardToken, USER, 1);
+
+        vm.stopPrank();
+
+        // buy some tickets
+        vm.startPrank(USER);
+        rewardToken.mint(TICKET_PRICE * 2);
+        rewardToken.approve(address(lottery), TICKET_PRICE * 2);
+        uint256 ticketId = buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
+        uint256 ticketId1 = buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
+        vm.stopPrank();
+
+        uint128 drawId = lottery.currentDraw();
+
+        for (uint256 i = drawId + 1; i <= drawId + LotteryMath.DRAWS_PER_YEAR; ++i) {
+            finalizeDraw(i * 0x04003001);
+        }
+
+        uint256 balance = rewardToken.balanceOf(address(lottery));
+        vm.startPrank(lottery.owner());
+        vm.expectRevert(abi.encodeWithSelector(AmountToRescueTooBig.selector, rewardToken, balance + 1, balance));
+        lottery.rescueTokens(rewardToken, USER, balance + 1);
+
+        lottery.rescueTokens(rewardToken, USER, balance);
+        vm.stopPrank();
+
+        assertEq(rewardToken.balanceOf(address(lottery)), 0);
+    }
+
     function testWrongSetups() public {
         LotteryDrawSchedule memory drawSchedule =
             LotteryDrawSchedule(block.timestamp + 3 * PERIOD, PERIOD, COOL_DOWN_PERIOD);

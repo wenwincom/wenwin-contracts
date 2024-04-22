@@ -14,6 +14,7 @@ contract LotterySetup is ILotterySetup {
 
     uint256 public immutable override minInitialPot;
     uint256 public immutable override jackpotBound;
+    uint256 public immutable override maxPot;
 
     IERC20 public immutable override rewardToken;
 
@@ -77,6 +78,7 @@ contract LotterySetup is ILotterySetup {
         uint256 tokenUnit = 10 ** IERC20Metadata(address(lotterySetupParams.token)).decimals();
         minInitialPot = 4 * tokenUnit;
         jackpotBound = 2_000_000 * tokenUnit;
+        maxPot = 6_660_000 * tokenUnit;
         rewardToken = lotterySetupParams.token;
         firstDrawSchedule = lotterySetupParams.drawSchedule.firstDrawScheduledAt;
         drawPeriod = lotterySetupParams.drawSchedule.drawPeriod;
