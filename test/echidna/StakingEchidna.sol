@@ -147,7 +147,7 @@ contract StakingEchidna {
     function getMaxRewardAmount() public view returns (uint256 maxRewardAmount) {
         uint256 ticketPrice = lottery.ticketPrice();
         uint256 totalTickets = lottery.nextTicketId();
-        maxRewardAmount = (totalTickets * ticketPrice * LotteryMath.STAKING_REWARD) / PercentageMath.PERCENTAGE_BASE;
+        maxRewardAmount = (totalTickets * ticketPrice * LotteryMath.STANDARD_FEE) / PercentageMath.PERCENTAGE_BASE;
     }
 
     function withdrawPostCondition(

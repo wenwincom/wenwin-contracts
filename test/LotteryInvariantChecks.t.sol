@@ -38,16 +38,15 @@ contract LotteryInvariantChecksTest is LotteryTestBase {
         }
     }
 
-    function unclaimedRewards() internal returns (uint256 totalUnclaimed) {
-        totalUnclaimed = lottery.unclaimedRewards(LotteryRewardType.STANDARD);
-        vm.prank(FRONTEND_ADDRESS);
-        totalUnclaimed += lottery.unclaimedRewards(LotteryRewardType.FRONTEND);
+    function unclaimedFees() internal view returns (uint256 totalUnclaimed) {
+        totalUnclaimed = lottery.unclaimedFees() + lottery.unclaimedFrontendFees(FRONTEND_ADDRESS);
     }
 
     function claimRewards() internal {
-        lottery.claimRewards(LotteryRewardType.STANDARD);
+        vm.prank(lottery.feeRecipient());
+        lottery.claimFees();
         vm.prank(FRONTEND_ADDRESS);
-        lottery.claimRewards(LotteryRewardType.FRONTEND);
-        assertEq(unclaimedRewards(), 0);
+        lottery.claimFrontendFees();
+        assertEq(unclaimedFees(), 0);
     }
 }

@@ -156,21 +156,20 @@ contract LotteryTest is LotteryTestBase {
         buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
         vm.stopPrank();
 
-        assertEq(lottery.unclaimedRewards(LotteryRewardType.STANDARD), TICKET_FEE);
-        vm.prank(FRONTEND_ADDRESS);
-        assertEq(lottery.unclaimedRewards(LotteryRewardType.FRONTEND), TICKET_FRONTEND_FEE);
+        assertEq(lottery.unclaimedFees(), TICKET_FEE);
+        assertEq(lottery.unclaimedFrontendFees(FRONTEND_ADDRESS), TICKET_FRONTEND_FEE);
 
         address feeRecipient = lottery.feeRecipient();
         uint256 preBalance = rewardToken.balanceOf(feeRecipient);
-        lottery.claimRewards(LotteryRewardType.STANDARD);
-        assertEq(lottery.unclaimedRewards(LotteryRewardType.STANDARD), 0);
+        vm.prank(feeRecipient);
+        lottery.claimFees();
+        assertEq(lottery.unclaimedFees(), 0);
         assertEq(rewardToken.balanceOf(feeRecipient), preBalance + TICKET_FEE);
 
         preBalance = rewardToken.balanceOf(FRONTEND_ADDRESS);
-        vm.startPrank(FRONTEND_ADDRESS);
-        lottery.claimRewards(LotteryRewardType.FRONTEND);
-        assertEq(lottery.unclaimedRewards(LotteryRewardType.FRONTEND), 0);
-        vm.stopPrank();
+        vm.prank(FRONTEND_ADDRESS);
+        lottery.claimFrontendFees();
+        assertEq(lottery.unclaimedFrontendFees(FRONTEND_ADDRESS), 0);
         assertEq(rewardToken.balanceOf(FRONTEND_ADDRESS), preBalance + TICKET_FRONTEND_FEE);
     }
 
@@ -181,7 +180,7 @@ contract LotteryTest is LotteryTestBase {
         buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
         vm.stopPrank();
 
-        assertEq(lottery.unclaimedRewards(LotteryRewardType.STANDARD), TICKET_FEE);
+        assertEq(lottery.unclaimedFees(), TICKET_FEE);
 
         address feeRecipient = lottery.feeRecipient();
         uint256 preBalance = rewardToken.balanceOf(feeRecipient);
@@ -189,7 +188,7 @@ contract LotteryTest is LotteryTestBase {
         vm.prank(feeRecipient);
         lottery.changeFeeRecipient(address(1234));
         assertEq(lottery.feeRecipient(), address(1234));
-        assertEq(lottery.unclaimedRewards(LotteryRewardType.STANDARD), 0);
+        assertEq(lottery.unclaimedFees(), 0);
         assertEq(rewardToken.balanceOf(feeRecipient), preBalance + TICKET_FEE);
 
         vm.expectRevert(Unauthorized.selector);
