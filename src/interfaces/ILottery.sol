@@ -6,6 +6,7 @@ import "src/interfaces/ILotterySetup.sol";
 import "src/interfaces/IRNSourceController.sol";
 import "src/interfaces/ITicket.sol";
 import "src/interfaces/IReferralSystem.sol";
+import "src/interfaces/IFeeCollector.sol";
 
 /// @dev Invalid caller to the function.
 error Unauthorized();
@@ -44,16 +45,8 @@ error NothingToClaim(uint256 ticketId);
 /// @param drawId Unique identifier for draw
 error DrawNotFinished(uint128 drawId);
 
-/// @dev List of implemented rewards.
-/// @param FRONTEND Reward paid to frontend operators for each ticket sold.
-/// @param STANDARD Standard lottery fee.
-enum LotteryRewardType {
-    FRONTEND,
-    STANDARD
-}
-
 /// @dev Interface that decentralized lottery implements
-interface ILottery is ITicket, ILotterySetup, IRNSourceController {
+interface ILottery is ITicket, ILotterySetup, IRNSourceController, IFeeCollector {
     /// @dev New ticket has been purchased by `user` for `drawId`.
     /// @param currentDraw Currently active draw.
     /// @param ticketId Ticket unique identifier.
@@ -72,11 +65,10 @@ interface ILottery is ITicket, ILotterySetup, IRNSourceController {
         address indexed referrer
     );
 
-    /// @dev Rewards are claimed from the lottery.
-    /// @param rewardRecipient Address that received the reward.
-    /// @param amount Total amount of rewards claimed.
-    /// @param rewardType 0 - staking reward, 1 - frontend reward.
-    event ClaimedRewards(address indexed rewardRecipient, uint256 indexed amount, LotteryRewardType indexed rewardType);
+    /// @dev Freontend fees are claimed from the lottery.
+    /// @param frontend Address the frontend operator.
+    /// @param amount Total amount of fees claimed.
+    event ClaimedFrontendFees(address indexed frontend, uint256 indexed amount);
 
     /// @dev Winnings are claimed from the lottery for particular ticket
     /// @param user Address of the user claiming winnings.
@@ -93,9 +85,6 @@ interface ILottery is ITicket, ILotterySetup, IRNSourceController {
     /// @param randomNumber Random number used for reconstructing ticket.
     /// @param winningTicket Winning ticket represented as packed uint120.
     event FinishedExecutingDraw(uint128 indexed drawId, uint256 indexed randomNumber, uint120 indexed winningTicket);
-
-    /// @return feeRecipient Staking fee recipient.
-    function feeRecipient() external view returns (address feeRecipient);
 
     /// @return ticketId Next ticket id to be minted after the last draw was finalized.
     function lastDrawFinalTicketId() external view returns (uint256 ticketId);
@@ -121,9 +110,9 @@ interface ILottery is ITicket, ILotterySetup, IRNSourceController {
     /// @return netProfit Current cumulative net profit calculated when the last draw was finished.
     function currentNetProfit() external view returns (int256 netProfit);
 
-    /// @param rewardType type of the reward being checked.
-    /// @return rewards Amount of rewards to be paid out.
-    function unclaimedRewards(LotteryRewardType rewardType) external view returns (uint256 rewards);
+    /// @param frontend Address of the frontend operator.
+    /// @return unclaimedAmount Amount of fees to be paid out.
+    function unclaimedFrontendFees(address frontend) external view returns (uint256 unclaimedAmount);
 
     /// @return drawId Current game in progress.
     function currentDraw() external view returns (uint128 drawId);
@@ -156,10 +145,9 @@ interface ILottery is ITicket, ILotterySetup, IRNSourceController {
         external
         returns (uint256[] memory ticketIds);
 
-    /// @dev Transfers all unclaimed rewards to frontend operator, or staking recipient.
-    /// @param rewardType type of the reward being claimed.
-    /// @return claimedAmount Amount of tokens claimed to `feeRecipient`
-    function claimRewards(LotteryRewardType rewardType) external returns (uint256 claimedAmount);
+    /// @dev Transfers all unclaimed fees to frontend operator.
+    /// @return amountClaimed Amount of tokens claimed to the frontend operator.
+    function claimFrontendFees() external returns (uint256 amountClaimed);
 
     /// @dev Transfer all winnings to `msg.sender` for the winning tickets.
     /// It reverts in case of non winning ticket.

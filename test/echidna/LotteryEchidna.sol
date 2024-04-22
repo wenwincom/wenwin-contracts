@@ -234,20 +234,16 @@ contract LotteryEchidna {
 
     function claimRewards(uint8 rewardTypeRandom) external {
         // Pre-condition
-        uint8 rewardType = rewardTypeRandom % 2;
-        uint256 rewardBalanceBefore = getRewardBalance(rewardType);
+        bool isFrontend = rewardTypeRandom % 2 == 0;
+        uint256 rewardBalanceBefore = getRewardBalance(isFrontend);
 
-        // Action
-        Hevm(HEVM_ADDRESS).prank(msg.sender);
-        try lottery.claimRewards(LotteryRewardType(rewardType)) returns (uint256 claimedAmount) {
-            // Post-condition
-            uint256 rewardBalanceAfter = getRewardBalance(rewardType);
-            assert(rewardBalanceBefore + claimedAmount == rewardBalanceAfter);
-            rewardTokenLotteryBalance -= claimedAmount;
-        } catch (bytes memory) {
-            // Reverts
-            assert(false);
-        }
+        Hevm(HEVM_ADDRESS).prank(isFrontend ? msg.sender : lottery.feeRecipient());
+        uint256 claimedAmount = isFrontend ? lottery.claimFrontendFees() : lottery.claimFees();
+
+        // Post-condition
+        uint256 rewardBalanceAfter = getRewardBalance(isFrontend);
+        assert(rewardBalanceBefore + claimedAmount == rewardBalanceAfter);
+        rewardTokenLotteryBalance -= claimedAmount;
     }
 
     function stakingEchidnaStake(uint256 amount) external {
@@ -460,13 +456,7 @@ contract LotteryEchidna {
         return ((_count == SELECTION_SIZE) && (numberForCount == uint256(0)));
     }
 
-    function getRewardBalance(uint8 rewardType) private view returns (uint256) {
-        if (rewardType == uint8(LotteryRewardType.FRONTEND)) {
-            return rewardToken.balanceOf(msg.sender);
-        } else if (rewardType == uint8(LotteryRewardType.STANDARD)) {
-            return rewardToken.balanceOf(lottery.feeRecipient());
-        }
-        assert(false);
-        return (0);
+    function getRewardBalance(bool isFrontend) private view returns (uint256) {
+        return rewardToken.balanceOf(isFrontend ? msg.sender : lottery.feeRecipient());
     }
 }

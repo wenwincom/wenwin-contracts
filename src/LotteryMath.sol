@@ -11,11 +11,11 @@ library LotteryMath {
     using PercentageMath for int256;
 
     /// @dev percentage of ticket price being paid for staking reward
-    uint256 public constant STAKING_REWARD = 20 * PercentageMath.ONE_PERCENT;
+    uint256 public constant STANDARD_FEE = 20 * PercentageMath.ONE_PERCENT;
     /// @dev percentage of ticket price being paid to frontend operator
-    uint256 public constant FRONTEND_REWARD = 10 * PercentageMath.ONE_PERCENT;
+    uint256 public constant FRONTEND_FEE = 10 * PercentageMath.ONE_PERCENT;
     /// @dev Percentage of the ticket price that goes to the pot
-    uint256 public constant TICKET_PRICE_TO_POT = PercentageMath.PERCENTAGE_BASE - STAKING_REWARD - FRONTEND_REWARD;
+    uint256 public constant TICKET_PRICE_TO_POT = PercentageMath.PERCENTAGE_BASE - STANDARD_FEE - FRONTEND_FEE;
     /// @dev safety margin used to calculate excess pot, in percentage
     uint256 public constant SAFETY_MARGIN = 67 * PercentageMath.ONE_PERCENT;
     /// @dev Percentage of excess pot reserved for bonus
@@ -111,21 +111,20 @@ library LotteryMath {
             : fixedReward.getPercentage(calculateMultiplier(excess, ticketsSold, expectedPayout));
     }
 
-    /// @dev Calculate frontend rewards amount for specific tickets sold
+    /// @dev Calculate frontend and standard fees amount for specific tickets sold
     /// @param ticketPrice One lottery ticket price
     /// @param ticketsSold Amount of tickets sold since last fee payout
-    /// @param rewardType Type of the reward we are calculating
-    /// @return dueRewards Total due rewards for the particular reward
-    function calculateRewards(
+    /// @param isFrontend True if calculating frontend fees, false if standard fees
+    /// @return dueFees Total due rewards for the particular reward
+    function calculateFees(
         uint256 ticketPrice,
         uint256 ticketsSold,
-        LotteryRewardType rewardType
+        bool isFrontend
     )
         internal
         pure
-        returns (uint256 dueRewards)
+        returns (uint256 dueFees)
     {
-        uint256 rewardPercentage = (rewardType == LotteryRewardType.FRONTEND) ? FRONTEND_REWARD : STAKING_REWARD;
-        dueRewards = (ticketsSold * ticketPrice).getPercentage(rewardPercentage);
+        dueFees = (ticketsSold * ticketPrice).getPercentage(isFrontend ? FRONTEND_FEE : STANDARD_FEE);
     }
 }

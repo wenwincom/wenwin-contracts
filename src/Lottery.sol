@@ -98,7 +98,7 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
         if (newFeeRecipient == address(0)) {
             revert ZeroAddressProvided();
         }
-        claimRewards(LotteryRewardType.STANDARD);
+        claimFees();
         feeRecipient = newFeeRecipient;
     }
 
@@ -135,19 +135,34 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
         emit StartedExecutingDraw(currentDraw);
     }
 
-    function unclaimedRewards(LotteryRewardType rewardType) external view override returns (uint256 rewards) {
-        uint256 dueTicketsSold = (rewardType == LotteryRewardType.FRONTEND)
-            ? frontendDueTicketSales[msg.sender]
-            : nextTicketId - claimedStakingRewardAtTicketId;
-        rewards = LotteryMath.calculateRewards(ticketPrice, dueTicketsSold, rewardType);
+    function unclaimedFrontendFees(address frontend) external view override returns (uint256 unclaimedAmount) {
+        unclaimedAmount = LotteryMath.calculateFees(ticketPrice, frontendDueTicketSales[frontend], true);
     }
 
-    function claimRewards(LotteryRewardType rewardType) public override returns (uint256 claimedAmount) {
-        address beneficiary = (rewardType == LotteryRewardType.FRONTEND) ? msg.sender : feeRecipient;
-        claimedAmount = LotteryMath.calculateRewards(ticketPrice, dueTicketsSoldAndReset(beneficiary), rewardType);
+    function feeToken() external view override returns (IERC20 token) {
+        token = rewardToken;
+    }
 
-        emit ClaimedRewards(beneficiary, claimedAmount, rewardType);
-        rewardToken.safeTransfer(beneficiary, claimedAmount);
+    function unclaimedFees() external view override returns (uint256 unclaimedAmount) {
+        uint256 dueTicketsSold = nextTicketId - claimedStakingRewardAtTicketId;
+        unclaimedAmount = LotteryMath.calculateFees(ticketPrice, dueTicketsSold, false);
+    }
+
+    function claimFrontendFees() public override returns (uint256 amountClaimed) {
+        amountClaimed = LotteryMath.calculateFees(ticketPrice, dueTicketsSoldAndReset(msg.sender), true);
+
+        rewardToken.safeTransfer(msg.sender, amountClaimed);
+        emit ClaimedFrontendFees(msg.sender, amountClaimed);
+    }
+
+    function claimFees() public override returns (uint256 amountClaimed) {
+        if (msg.sender != feeRecipient) {
+            revert Unauthorized();
+        }
+        amountClaimed = LotteryMath.calculateFees(ticketPrice, dueTicketsSoldAndReset(msg.sender), false);
+
+        rewardToken.safeTransfer(msg.sender, amountClaimed);
+        emit ClaimedFees(msg.sender, amountClaimed);
     }
 
     function claimable(uint256 ticketId) external view override returns (uint256 claimableAmount, uint8 winTier) {

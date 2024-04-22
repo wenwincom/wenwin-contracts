@@ -83,18 +83,12 @@ contract LotteryMathTest is Test {
     function testCalculateStakingFees(uint256 ticketPrice, uint256 ticketsSold) public {
         ticketPrice = bound(ticketPrice, 1e18, 5e18);
         ticketsSold = bound(ticketsSold, 1, 1e12);
-        assertEq(
-            (ticketsSold * ticketPrice) / 5,
-            LotteryMath.calculateRewards(ticketPrice, ticketsSold, LotteryRewardType.STANDARD)
-        );
+        assertEq((ticketsSold * ticketPrice) / 5, LotteryMath.calculateFees(ticketPrice, ticketsSold, false));
     }
 
     function testCalculateFrontendFees(uint256 ticketPrice, uint256 ticketsSold) public {
         ticketPrice = bound(ticketPrice, 1e18, 5e18);
         ticketsSold = bound(ticketsSold, 1, 1e12);
-        assertEq(
-            (ticketsSold * ticketPrice) / 10,
-            LotteryMath.calculateRewards(ticketPrice, ticketsSold, LotteryRewardType.FRONTEND)
-        );
+        assertEq((ticketsSold * ticketPrice) / 10, LotteryMath.calculateFees(ticketPrice, ticketsSold, true));
     }
 }
