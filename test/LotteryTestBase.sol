@@ -51,7 +51,8 @@ abstract contract LotteryTestBase is Test {
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
 
         rewardToken.mint(1e24);

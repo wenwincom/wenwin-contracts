@@ -23,7 +23,8 @@ contract LotteryTest is LotteryTestBase {
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
         timestamp = bound(timestamp, 0, 2 * lot.initialPotDeadline());
         initialSize = bound(initialSize, 0, lot.jackpotBound() * 5);
@@ -68,7 +69,8 @@ contract LotteryTest is LotteryTestBase {
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
         rewardToken.mint(5 ether);
         rewardToken.approve(address(lottery), 5 ether);
@@ -390,7 +392,8 @@ contract LotteryTest is LotteryTestBase {
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
 
         vm.expectRevert(InitialPotPeriodTooShort.selector);
@@ -406,7 +409,8 @@ contract LotteryTest is LotteryTestBase {
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
 
         vm.expectRevert(DrawPeriodInvalidSetup.selector);
@@ -422,7 +426,8 @@ contract LotteryTest is LotteryTestBase {
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
 
         vm.expectRevert(TicketPriceZero.selector);
@@ -432,7 +437,8 @@ contract LotteryTest is LotteryTestBase {
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
 
         vm.expectRevert(SelectionSizeZero.selector);
@@ -440,7 +446,8 @@ contract LotteryTest is LotteryTestBase {
             LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 0, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
 
         vm.expectRevert(SelectionSizeMaxTooBig.selector);
@@ -448,7 +455,8 @@ contract LotteryTest is LotteryTestBase {
             LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 5, 120, EXPECTED_PAYOUT, fixedRewards),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
 
         vm.expectRevert(SelectionSizeTooBig.selector);
@@ -456,7 +464,8 @@ contract LotteryTest is LotteryTestBase {
             LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 17, 20, EXPECTED_PAYOUT, fixedRewards),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
 
         vm.expectRevert(SelectionSizeTooBig.selector);
@@ -466,7 +475,8 @@ contract LotteryTest is LotteryTestBase {
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
 
         vm.expectRevert(InvalidExpectedPayout.selector);
@@ -476,7 +486,8 @@ contract LotteryTest is LotteryTestBase {
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
 
         vm.expectRevert(InvalidExpectedPayout.selector);
@@ -486,7 +497,8 @@ contract LotteryTest is LotteryTestBase {
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
 
         vm.expectRevert(InvalidFixedRewardSetup.selector);
@@ -502,7 +514,8 @@ contract LotteryTest is LotteryTestBase {
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
 
         uint256[] memory invalidFixedRewards = new uint256[](SELECTION_SIZE);
@@ -520,7 +533,8 @@ contract LotteryTest is LotteryTestBase {
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
 
         invalidFixedRewards[SELECTION_SIZE - 1] = 0;
@@ -538,8 +552,32 @@ contract LotteryTest is LotteryTestBase {
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY
+            MAX_RN_REQUEST_DELAY,
+            ""
         );
+    }
+
+    // Token URI
+
+    function testSetBaseURI() public {
+        vm.startPrank(USER);
+        rewardToken.mint(TICKET_PRICE);
+        rewardToken.approve(address(lottery), TICKET_PRICE);
+        buyTicket(0, uint120(0x0F), address(0));
+        vm.stopPrank();
+
+        assertEq(lottery.tokenURI(0), "");
+
+        string memory baseURI = "https://api.test.com/lottery/";
+
+        vm.prank(USER);
+        vm.expectRevert("Ownable: caller is not the owner");
+        lottery.setBaseURI(baseURI);
+
+        vm.startPrank(lottery.owner());
+        lottery.setBaseURI(baseURI);
+        assertEq(lottery.tokenURI(0), string.concat(baseURI, "0"));
+        vm.stopPrank();
     }
 
     // Helper functions

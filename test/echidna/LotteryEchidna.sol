@@ -75,7 +75,8 @@ contract LotteryEchidna {
             ),
             address(0x121212),
             MAX_FAILED_ATTEMPTS,
-            MAX_REQUEST_DELAY
+            MAX_REQUEST_DELAY,
+            ""
         );
 
         rnSource = new RNSourceEchidna(address(lottery));

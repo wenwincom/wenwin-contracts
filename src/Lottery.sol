@@ -82,9 +82,10 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
         LotterySetupParams memory lotterySetupParams,
         address feeRecipient_,
         uint256 maxRNFailedAttempts,
-        uint256 maxRNRequestDelay
+        uint256 maxRNRequestDelay,
+        string memory baseURI
     )
-        Ticket()
+        Ticket(baseURI)
         LotterySetup(lotterySetupParams)
         RNSourceController(maxRNFailedAttempts, maxRNRequestDelay)
     {
