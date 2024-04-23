@@ -35,6 +35,9 @@ contract LotterySetup is ILotterySetup {
 
     uint256 private constant BASE_JACKPOT_PERCENTAGE = 30_030; // 30.03%
 
+    uint256 private constant DRAW_PERIOD_MASK = 0xFFFFFFFF;
+    uint256 private constant MIN_DRAW_PERIOD = 60 * 5; // 5 minutes
+
     /// @dev Constructs a new lottery contract
     /// @param lotterySetupParams Setup parameter for the lottery
     // solhint-disable-next-line code-complexity
@@ -62,16 +65,28 @@ contract LotterySetup is ILotterySetup {
         ) {
             revert SelectionSizeTooBig();
         }
+        (uint256[] memory periods, uint256 length,) = unpackDrawPeriod(lotterySetupParams.drawSchedule.drawPeriod);
+        if (length == 0) {
+            revert DrawPeriodInvalidSetup();
+        }
+        uint256 shortestPeriod = type(uint256).max;
+        for (uint256 i = 0; i < length; i++) {
+            if (periods[i] < MIN_DRAW_PERIOD) {
+                revert DrawPeriodInvalidSetup();
+            }
+            if (periods[i] < shortestPeriod) {
+                shortestPeriod = periods[i];
+            }
+        }
         if (
-            lotterySetupParams.drawSchedule.drawCoolDownPeriod >= lotterySetupParams.drawSchedule.drawPeriod
-                || lotterySetupParams.drawSchedule.firstDrawScheduledAt < lotterySetupParams.drawSchedule.drawPeriod
+            lotterySetupParams.drawSchedule.drawCoolDownPeriod >= shortestPeriod
+                || lotterySetupParams.drawSchedule.firstDrawScheduledAt < shortestPeriod
         ) {
             revert DrawPeriodInvalidSetup();
         }
-        initialPotDeadline =
-            lotterySetupParams.drawSchedule.firstDrawScheduledAt - lotterySetupParams.drawSchedule.drawPeriod;
+        initialPotDeadline = lotterySetupParams.drawSchedule.firstDrawScheduledAt - shortestPeriod;
         // slither-disable-next-line timestamp
-        if (initialPotDeadline < (block.timestamp + lotterySetupParams.drawSchedule.drawPeriod)) {
+        if (initialPotDeadline < (block.timestamp + shortestPeriod)) {
             revert InitialPotPeriodTooShort();
         }
 
@@ -150,7 +165,12 @@ contract LotterySetup is ILotterySetup {
     }
 
     function drawScheduledAt(uint128 drawId) public view override returns (uint256 time) {
-        time = firstDrawSchedule + (drawId * drawPeriod);
+        (uint256[] memory periods, uint256 length, uint256 sum) = unpackDrawPeriod(drawPeriod);
+        time = firstDrawSchedule + (drawId / length) * sum;
+
+        for (uint256 i = 0; i < (drawId % length); i++) {
+            time += periods[i];
+        }
     }
 
     function ticketRegistrationDeadline(uint128 drawId) public view override returns (uint256 time) {
@@ -159,6 +179,26 @@ contract LotterySetup is ILotterySetup {
 
     function _baseJackpot(uint256 _initialPot) internal view returns (uint256) {
         return Math.min(_initialPot.getPercentage(BASE_JACKPOT_PERCENTAGE), jackpotBound);
+    }
+
+    /// @dev Unpacks draw periods from uint256.
+    /// @param drawPeriodInput uint256 representation of uint32 array of period duration.
+    /// @return periods Arry of periods duration.
+    /// @return length Number of elements in `periods` array.
+    /// @return sum Sum of all elements in `periods` array.
+    function unpackDrawPeriod(uint256 drawPeriodInput)
+        private
+        pure
+        returns (uint256[] memory periods, uint256 length, uint256 sum)
+    {
+        uint256 tempPeriod = drawPeriodInput;
+        periods = new uint256[](8);
+        while (tempPeriod != 0) {
+            uint256 currentPeriod = (tempPeriod & DRAW_PERIOD_MASK);
+            sum += currentPeriod;
+            periods[length++] = currentPeriod;
+            tempPeriod >>= 32;
+        }
     }
 
     function packFixedRewards(uint256[] memory rewards) private view returns (uint256 packed) {
