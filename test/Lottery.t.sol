@@ -375,6 +375,45 @@ contract LotteryTest is LotteryTestBase {
         assertEq(rewardToken.balanceOf(address(lottery)), 0);
     }
 
+    function testMultiplePeriods() public {
+        uint256 drawPeriodPacked = (3 days << 32) + 2 days;
+        LotteryDrawSchedule memory drawSchedule =
+            LotteryDrawSchedule(block.timestamp + 4 days, drawPeriodPacked, 30 minutes);
+        Lottery multiDraws = new Lottery(
+            LotterySetupParams(
+                rewardToken, drawSchedule, TICKET_PRICE, SELECTION_SIZE, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards
+            ),
+            rewardsRecipient,
+            MAX_RN_FAILED_ATTEMPTS,
+            MAX_RN_REQUEST_DELAY,
+            ""
+        );
+
+        assertEq(multiDraws.drawScheduledAt(0), block.timestamp + 4 days);
+        assertEq(multiDraws.drawScheduledAt(1), multiDraws.drawScheduledAt(0) + 2 days);
+        assertEq(multiDraws.drawScheduledAt(2), multiDraws.drawScheduledAt(1) + 3 days);
+
+        drawPeriodPacked = (3 days << 64) + 2 days;
+        LotteryDrawSchedule memory drawScheduleInvalid =
+            LotteryDrawSchedule(block.timestamp + 3 days, drawPeriodPacked, 30 minutes);
+        vm.expectRevert(DrawPeriodInvalidSetup.selector);
+        new Lottery(
+            LotterySetupParams(
+                rewardToken,
+                drawScheduleInvalid,
+                TICKET_PRICE,
+                SELECTION_SIZE,
+                SELECTION_MAX,
+                EXPECTED_PAYOUT,
+                fixedRewards
+            ),
+            rewardsRecipient,
+            MAX_RN_FAILED_ATTEMPTS,
+            MAX_RN_REQUEST_DELAY,
+            ""
+        );
+    }
+
     function testWrongSetups() public {
         LotteryDrawSchedule memory drawSchedule =
             LotteryDrawSchedule(block.timestamp + 3 * PERIOD, PERIOD, COOL_DOWN_PERIOD);
@@ -418,6 +457,23 @@ contract LotteryTest is LotteryTestBase {
             LotterySetupParams(
                 rewardToken,
                 LotteryDrawSchedule(firstDrawAt, 0, COOL_DOWN_PERIOD),
+                TICKET_PRICE,
+                SELECTION_SIZE,
+                SELECTION_MAX,
+                EXPECTED_PAYOUT,
+                fixedRewards
+            ),
+            rewardsRecipient,
+            MAX_RN_FAILED_ATTEMPTS,
+            MAX_RN_REQUEST_DELAY,
+            ""
+        );
+
+        vm.expectRevert(DrawPeriodInvalidSetup.selector);
+        new Lottery(
+            LotterySetupParams(
+                rewardToken,
+                LotteryDrawSchedule(firstDrawAt, COOL_DOWN_PERIOD - 1, COOL_DOWN_PERIOD),
                 TICKET_PRICE,
                 SELECTION_SIZE,
                 SELECTION_MAX,
