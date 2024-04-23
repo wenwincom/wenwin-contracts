@@ -27,4 +27,8 @@ interface ITicket is IERC721 {
     /// @return combination Ticket combination that is packed as uint120.
     /// @return claimed If ticket is already claimed, in case of winning ticket.
     function ticketsInfo(uint256 ticketId) external view returns (uint128 drawId, uint120 combination, bool claimed);
+
+    /// @dev Sets the base token URI for all token IDs.
+    /// @param newBaseTokenURI New base token URI.
+    function setBaseURI(string memory newBaseTokenURI) external;
 }
