@@ -63,6 +63,11 @@ contract LotteryEchidna {
             fixedRewards[counter] = counter * TICKET_PRICE;
         }
 
+        //vm.startPrank(address(987_651_234));
+        rewardToken.mint(1e24);
+        //address predictedAddress = computeCreateAddress(address(987_651_234), 1);
+        //rewardToken.approve(predictedAddress, 1e24);
+
         lottery = new Lottery(
             LotterySetupParams(
                 rewardToken,
@@ -71,7 +76,8 @@ contract LotteryEchidna {
                 SELECTION_SIZE,
                 SELECTION_MAX,
                 EXPECTED_PAYOUT,
-                fixedRewards
+                fixedRewards,
+                1e24
             ),
             address(0x121212),
             MAX_FAILED_ATTEMPTS,
@@ -82,11 +88,7 @@ contract LotteryEchidna {
         rnSource = new RNSourceEchidna(address(lottery));
         lottery.initSource(rnSource);
 
-        rewardToken.mint(1e24);
-        rewardToken.transfer(address(lottery), 1e24);
-        rewardTokenLotteryBalance = 1e24; // solhint-disable-line reentrancy
-        Hevm(HEVM_ADDRESS).warp(lottery.initialPotDeadline() + 1);
-        lottery.finalizeInitialPotRaise();
+        //vm.stopPrank();
     }
 
     function buyTicket(uint120 ticketCombination, address frontend, address referrer) public virtual {

@@ -111,7 +111,6 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
     )
         external
         override
-        requireJackpotInitialized
         returns (uint256[] memory ticketIds)
     {
         if (drawIds.length != tickets.length) {

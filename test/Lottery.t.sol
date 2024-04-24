@@ -9,9 +9,18 @@ import "test/TestHelpers.sol";
 contract LotteryTest is LotteryTestBase {
     address public constant USER = address(123);
 
-    function testFinalizeInitialPot(uint256 timestamp, uint256 initialSize) public {
+    function testFinalizeInitialPot(uint256 initialSize) public {
         vm.warp(0);
-        Lottery lot = new Lottery(
+        uint256 tokenUnit = 10 ** rewardToken.decimals();
+        initialSize = bound(initialSize, 0, 6_660_000 * tokenUnit);
+        vm.startPrank(address(987_651_234));
+        rewardToken.mint(initialSize);
+        address predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, initialSize);
+        if (initialSize < 4 * tokenUnit) {
+            vm.expectRevert(abi.encodeWithSelector(InsufficientInitialPot.selector, initialSize));
+        }
+        new Lottery(
             LotterySetupParams(
                 rewardToken,
                 LotteryDrawSchedule(2 * PERIOD, PERIOD, COOL_DOWN_PERIOD),
@@ -19,68 +28,15 @@ contract LotteryTest is LotteryTestBase {
                 SELECTION_SIZE,
                 SELECTION_MAX,
                 EXPECTED_PAYOUT,
-                fixedRewards
+                fixedRewards,
+                initialSize
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
-        timestamp = bound(timestamp, 0, 2 * lot.initialPotDeadline());
-        initialSize = bound(initialSize, 0, lot.jackpotBound() * 5);
-        vm.mockCall(
-            address(rewardToken),
-            abi.encodeWithSelector(IERC20.balanceOf.selector, address(lot)),
-            abi.encode(initialSize)
-        );
-        vm.warp(timestamp);
-        bool reverts = false;
-        if (timestamp <= lot.initialPotDeadline()) {
-            vm.expectRevert(FinalizingInitialPotBeforeDeadline.selector);
-            reverts = true;
-        } else if (initialSize < lot.minInitialPot()) {
-            vm.expectRevert(abi.encodeWithSelector(RaisedInsufficientFunds.selector, initialSize));
-            reverts = true;
-        }
-        lot.finalizeInitialPotRaise();
-        if (!reverts) {
-            uint256 percentageInitial = initialSize * 30_030 / 100_000;
-            assertEq(
-                lot.fixedReward(SELECTION_SIZE),
-                (percentageInitial >= lot.jackpotBound()) ? lot.jackpotBound() : percentageInitial
-            );
-            assertEq(lot.initialPot(), initialSize);
-            vm.expectRevert(JackpotAlreadyInitialized.selector);
-            lot.finalizeInitialPotRaise();
-        }
-    }
-
-    function testBuyTicketDuringInitialPotRaise() public {
-        vm.warp(0);
-        Lottery lot = new Lottery(
-            LotterySetupParams(
-                rewardToken,
-                LotteryDrawSchedule(2 * PERIOD, PERIOD, COOL_DOWN_PERIOD),
-                TICKET_PRICE,
-                SELECTION_SIZE,
-                SELECTION_MAX,
-                EXPECTED_PAYOUT,
-                fixedRewards
-            ),
-            rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY,
-            ""
-        );
-        rewardToken.mint(5 ether);
-        rewardToken.approve(address(lottery), 5 ether);
-        uint128[] memory drawIds = new uint128[](1);
-        drawIds[0] = 0;
-        uint120[] memory tickets = new uint120[](1);
-        tickets[0] = 0x0F;
-
-        vm.expectRevert(JackpotNotInitialized.selector);
-        lot.buyTickets(drawIds, tickets, FRONTEND_ADDRESS, address(0));
+        vm.stopPrank();
     }
 
     function testBuyInvalidTicket() public {
@@ -117,7 +73,7 @@ contract LotteryTest is LotteryTestBase {
 
         vm.stopPrank();
 
-        vm.warp(block.timestamp + 60 * 60 * 24);
+        vm.warp(lottery.drawScheduledAt(lottery.currentDraw()));
         lottery.executeDraw();
 
         // no winning ticket
@@ -211,7 +167,7 @@ contract LotteryTest is LotteryTestBase {
         vm.expectRevert(ExecutingDrawTooEarly.selector);
         lottery.executeDraw();
 
-        vm.warp(block.timestamp + 60 * 60 * 24);
+        vm.warp(lottery.drawScheduledAt(lottery.currentDraw()));
         lottery.executeDraw();
 
         vm.expectRevert(DrawAlreadyInProgress.selector);
@@ -354,8 +310,8 @@ contract LotteryTest is LotteryTestBase {
         vm.startPrank(USER);
         rewardToken.mint(TICKET_PRICE * 2);
         rewardToken.approve(address(lottery), TICKET_PRICE * 2);
-        uint256 ticketId = buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
-        uint256 ticketId1 = buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
+        buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
+        buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
         vm.stopPrank();
 
         uint128 drawId = lottery.currentDraw();
@@ -376,12 +332,23 @@ contract LotteryTest is LotteryTestBase {
     }
 
     function testMultiplePeriods() public {
+        vm.startPrank(address(987_651_234));
         uint256 drawPeriodPacked = (3 days << 32) + 2 days;
         LotteryDrawSchedule memory drawSchedule =
             LotteryDrawSchedule(block.timestamp + 4 days, drawPeriodPacked, 30 minutes);
+        rewardToken.mint(5e18);
+        address predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
         Lottery multiDraws = new Lottery(
             LotterySetupParams(
-                rewardToken, drawSchedule, TICKET_PRICE, SELECTION_SIZE, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards
+                rewardToken,
+                drawSchedule,
+                TICKET_PRICE,
+                SELECTION_SIZE,
+                SELECTION_MAX,
+                EXPECTED_PAYOUT,
+                fixedRewards,
+                5e18
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
@@ -405,7 +372,8 @@ contract LotteryTest is LotteryTestBase {
                 SELECTION_SIZE,
                 SELECTION_MAX,
                 EXPECTED_PAYOUT,
-                fixedRewards
+                fixedRewards,
+                5e18
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
@@ -415,6 +383,8 @@ contract LotteryTest is LotteryTestBase {
     }
 
     function testWrongSetups() public {
+        vm.startPrank(address(987_651_234));
+
         LotteryDrawSchedule memory drawSchedule =
             LotteryDrawSchedule(block.timestamp + 3 * PERIOD, PERIOD, COOL_DOWN_PERIOD);
 
@@ -427,7 +397,8 @@ contract LotteryTest is LotteryTestBase {
                 SELECTION_SIZE,
                 SELECTION_MAX,
                 EXPECTED_PAYOUT,
-                fixedRewards
+                fixedRewards,
+                5e18
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
@@ -435,23 +406,9 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        vm.expectRevert(InitialPotPeriodTooShort.selector);
-        new Lottery(
-            LotterySetupParams(
-                rewardToken,
-                LotteryDrawSchedule(block.timestamp + PERIOD * 2 - 1, PERIOD, COOL_DOWN_PERIOD),
-                TICKET_PRICE,
-                SELECTION_SIZE,
-                SELECTION_MAX,
-                EXPECTED_PAYOUT,
-                fixedRewards
-            ),
-            rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
-            MAX_RN_REQUEST_DELAY,
-            ""
-        );
-
+        rewardToken.mint(5e18);
+        address predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(DrawPeriodInvalidSetup.selector);
         new Lottery(
             LotterySetupParams(
@@ -461,7 +418,8 @@ contract LotteryTest is LotteryTestBase {
                 SELECTION_SIZE,
                 SELECTION_MAX,
                 EXPECTED_PAYOUT,
-                fixedRewards
+                fixedRewards,
+                5e18
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
@@ -469,6 +427,9 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(DrawPeriodInvalidSetup.selector);
         new Lottery(
             LotterySetupParams(
@@ -478,7 +439,8 @@ contract LotteryTest is LotteryTestBase {
                 SELECTION_SIZE,
                 SELECTION_MAX,
                 EXPECTED_PAYOUT,
-                fixedRewards
+                fixedRewards,
+                5e18
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
@@ -486,10 +448,13 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(TicketPriceZero.selector);
         new Lottery(
             LotterySetupParams(
-                rewardToken, drawSchedule, 0, SELECTION_SIZE, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards
+                rewardToken, drawSchedule, 0, SELECTION_SIZE, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards, 5e18
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
@@ -497,37 +462,58 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(SelectionSizeZero.selector);
         new Lottery(
-            LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 0, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards),
+            LotterySetupParams(
+                rewardToken, drawSchedule, TICKET_PRICE, 0, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards, 5e18
+            ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
 
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(SelectionSizeMaxTooBig.selector);
         new Lottery(
-            LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 5, 120, EXPECTED_PAYOUT, fixedRewards),
+            LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 5, 120, EXPECTED_PAYOUT, fixedRewards, 5e18),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
 
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(SelectionSizeTooBig.selector);
         new Lottery(
-            LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 17, 20, EXPECTED_PAYOUT, fixedRewards),
+            LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 17, 20, EXPECTED_PAYOUT, fixedRewards, 5e18),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
 
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(SelectionSizeTooBig.selector);
         new Lottery(
             LotterySetupParams(
-                rewardToken, drawSchedule, TICKET_PRICE, SELECTION_MAX, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards
+                rewardToken,
+                drawSchedule,
+                TICKET_PRICE,
+                SELECTION_MAX,
+                SELECTION_MAX,
+                EXPECTED_PAYOUT,
+                fixedRewards,
+                5e18
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
@@ -535,10 +521,20 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(InvalidExpectedPayout.selector);
         new Lottery(
             LotterySetupParams(
-                rewardToken, drawSchedule, TICKET_PRICE, SELECTION_SIZE, SELECTION_MAX, TICKET_PRICE / 250, fixedRewards
+                rewardToken,
+                drawSchedule,
+                TICKET_PRICE,
+                SELECTION_SIZE,
+                SELECTION_MAX,
+                TICKET_PRICE / 250,
+                fixedRewards,
+                5e18
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
@@ -546,10 +542,13 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(InvalidExpectedPayout.selector);
         new Lottery(
             LotterySetupParams(
-                rewardToken, drawSchedule, TICKET_PRICE, SELECTION_SIZE, SELECTION_MAX, TICKET_PRICE, fixedRewards
+                rewardToken, drawSchedule, TICKET_PRICE, SELECTION_SIZE, SELECTION_MAX, TICKET_PRICE, fixedRewards, 5e18
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
@@ -557,6 +556,9 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(InvalidFixedRewardSetup.selector);
         new Lottery(
             LotterySetupParams(
@@ -566,7 +568,8 @@ contract LotteryTest is LotteryTestBase {
                 SELECTION_SIZE,
                 SELECTION_MAX,
                 EXPECTED_PAYOUT,
-                new uint256[](1)
+                new uint256[](1),
+                5e18
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
@@ -574,6 +577,9 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
         uint256[] memory invalidFixedRewards = new uint256[](SELECTION_SIZE);
         invalidFixedRewards[SELECTION_SIZE - 1] = 1e15;
         vm.expectRevert(InvalidFixedRewardSetup.selector);
@@ -585,7 +591,8 @@ contract LotteryTest is LotteryTestBase {
                 SELECTION_SIZE,
                 SELECTION_MAX,
                 EXPECTED_PAYOUT,
-                invalidFixedRewards
+                invalidFixedRewards,
+                5e18
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
@@ -593,6 +600,9 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
         invalidFixedRewards[SELECTION_SIZE - 1] = 0;
         invalidFixedRewards[0] = 1e18;
         vm.expectRevert(InvalidFixedRewardSetup.selector);
@@ -604,13 +614,16 @@ contract LotteryTest is LotteryTestBase {
                 SELECTION_SIZE,
                 SELECTION_MAX,
                 EXPECTED_PAYOUT,
-                invalidFixedRewards
+                invalidFixedRewards,
+                5e18
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
+
+        vm.stopPrank();
     }
 
     // Token URI
