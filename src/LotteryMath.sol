@@ -49,8 +49,9 @@ library LotteryMath {
 
         uint256 expectedRewardsOut = jackpotWon
             ? calculateReward(oldProfit, fixedJackpotSize, fixedJackpotSize, ticketsSold, true, expectedPayout)
-            : calculateMultiplier(calculateExcessPot(oldProfit, fixedJackpotSize), ticketsSold, expectedPayout)
-                * ticketsSold * expectedPayout;
+            : (ticketsSold * expectedPayout).getPercentage(
+                calculateMultiplier(calculateExcessPot(oldProfit, fixedJackpotSize), ticketsSold, expectedPayout)
+            );
 
         newProfit -= int256(expectedRewardsOut);
     }
