@@ -32,7 +32,6 @@ contract LotteryTest is LotteryTestBase {
                 initialSize
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -351,7 +350,6 @@ contract LotteryTest is LotteryTestBase {
                 5e18
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -376,7 +374,6 @@ contract LotteryTest is LotteryTestBase {
                 5e18
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -401,7 +398,6 @@ contract LotteryTest is LotteryTestBase {
                 5e18
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -422,7 +418,6 @@ contract LotteryTest is LotteryTestBase {
                 5e18
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -443,7 +438,6 @@ contract LotteryTest is LotteryTestBase {
                 5e18
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -457,7 +451,6 @@ contract LotteryTest is LotteryTestBase {
                 rewardToken, drawSchedule, 0, SELECTION_SIZE, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards, 5e18
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -471,7 +464,6 @@ contract LotteryTest is LotteryTestBase {
                 rewardToken, drawSchedule, TICKET_PRICE, 0, SELECTION_MAX, EXPECTED_PAYOUT, fixedRewards, 5e18
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -483,7 +475,6 @@ contract LotteryTest is LotteryTestBase {
         new Lottery(
             LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 5, 120, EXPECTED_PAYOUT, fixedRewards, 5e18),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -495,7 +486,6 @@ contract LotteryTest is LotteryTestBase {
         new Lottery(
             LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 17, 20, EXPECTED_PAYOUT, fixedRewards, 5e18),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -516,7 +506,6 @@ contract LotteryTest is LotteryTestBase {
                 5e18
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -537,7 +526,6 @@ contract LotteryTest is LotteryTestBase {
                 5e18
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -551,7 +539,6 @@ contract LotteryTest is LotteryTestBase {
                 rewardToken, drawSchedule, TICKET_PRICE, SELECTION_SIZE, SELECTION_MAX, TICKET_PRICE, fixedRewards, 5e18
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -572,7 +559,6 @@ contract LotteryTest is LotteryTestBase {
                 5e18
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -595,7 +581,6 @@ contract LotteryTest is LotteryTestBase {
                 5e18
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
@@ -618,7 +603,6 @@ contract LotteryTest is LotteryTestBase {
                 5e18
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );

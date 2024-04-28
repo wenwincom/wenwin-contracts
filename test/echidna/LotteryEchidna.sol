@@ -12,7 +12,6 @@ import "../TestToken.sol";
 contract LotteryEchidna {
     address internal constant HEVM_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
 
-    uint256 internal constant MAX_FAILED_ATTEMPTS = 3;
     uint256 internal constant MAX_REQUEST_DELAY = 60; // 1 min
     uint8 internal constant ECHIDNA_MAX_NUMBER_OF_DRAWS = 48; // 4 years
 
@@ -80,7 +79,6 @@ contract LotteryEchidna {
                 1e24
             ),
             address(0x121212),
-            MAX_FAILED_ATTEMPTS,
             MAX_REQUEST_DELAY,
             ""
         );

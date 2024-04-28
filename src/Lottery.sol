@@ -75,19 +75,17 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
 
     /// @dev Constructs a new lottery contract.
     /// @param lotterySetupParams Setup parameter for the lottery.
-    /// @param maxRNFailedAttempts Maximum number of consecutive failed attempts for random number source.
     /// @param maxRNRequestDelay Time considered as maximum delay for RN request.
     // solhint-disable-next-line code-complexity
     constructor(
         LotterySetupParams memory lotterySetupParams,
         address feeRecipient_,
-        uint256 maxRNFailedAttempts,
         uint256 maxRNRequestDelay,
         string memory baseURI
     )
         Ticket(baseURI)
         LotterySetup(lotterySetupParams)
-        RNSourceController(maxRNFailedAttempts, maxRNRequestDelay)
+        RNSourceController(maxRNRequestDelay)
     {
         feeRecipient = feeRecipient_;
     }

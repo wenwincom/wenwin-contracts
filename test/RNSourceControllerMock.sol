@@ -5,7 +5,7 @@ import "../src/RNSourceController.sol";
 
 contract RNSourceControllerMock is RNSourceController {
     // solhint-disable-next-line no-empty-blocks
-    constructor() RNSourceController(3, 30 minutes) { }
+    constructor() RNSourceController(30 minutes) { }
 
     function request() public {
         super.requestRandomNumber();
