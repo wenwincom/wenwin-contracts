@@ -39,6 +39,11 @@ abstract contract LotteryTestBase is Test {
         fixedRewards[2] = 2 * TICKET_PRICE;
         fixedRewards[3] = 3 * TICKET_PRICE;
 
+        vm.startPrank(address(987_651_234));
+        rewardToken.mint(1e24);
+        address predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 1e24);
+
         lottery = new Lottery(
             LotterySetupParams(
                 rewardToken,
@@ -47,19 +52,16 @@ abstract contract LotteryTestBase is Test {
                 SELECTION_SIZE,
                 SELECTION_MAX,
                 EXPECTED_PAYOUT,
-                fixedRewards
+                fixedRewards,
+                1e24
             ),
             rewardsRecipient,
             MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
-
-        rewardToken.mint(1e24);
-        rewardToken.transfer(address(lottery), 1e24);
-        vm.warp(lottery.initialPotDeadline() + 1);
-        lottery.finalizeInitialPotRaise();
         lottery.initSource(IRNSource(randomNumberSource));
+        vm.stopPrank();
 
         vm.mockCall(randomNumberSource, abi.encodeWithSelector(IRNSource.requestRandomNumber.selector), abi.encode(0));
     }
@@ -95,7 +97,7 @@ abstract contract LotteryTestBase is Test {
     }
 
     function finalizeDraw(uint256 randomNumber) internal {
-        vm.warp(block.timestamp + 60 * 60 * 24);
+        vm.warp(lottery.drawScheduledAt(lottery.currentDraw()));
         lottery.executeDraw();
         vm.prank(randomNumberSource);
         lottery.onRandomNumberFulfilled(randomNumber);

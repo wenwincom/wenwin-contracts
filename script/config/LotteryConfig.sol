@@ -26,7 +26,8 @@ contract LotteryConfig is Script {
                 selectionSize,
                 uint8(vm.envUint("LOTTERY_SELECTION_MAX")),
                 uint256(vm.envUint("LOTTERY_EXPECTED_PAYOUT")),
-                getFixedRewards(selectionSize)
+                getFixedRewards(selectionSize),
+                vm.envUint("LOTTERY_INITIAL_POT")
             ),
             vm.envAddress("TREASURY_ADDRESS"),
             vm.envUint("SOURCE_MAX_FAILED_ATTEMPTS"),

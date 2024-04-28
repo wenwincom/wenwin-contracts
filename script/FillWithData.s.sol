@@ -26,26 +26,10 @@ contract FillWithDataScript is Script {
 
         uint256 option = vm.envUint("FILL_WITH_DATA_OPTION");
         if (option == 1) {
-            initializePot();
-        } else if (option == 2) {
-            finalizePotRaise();
-        } else if (option == 3) {
             buyTickets();
-        } else if (option == 4) {
+        } else if (option == 2) {
             executeDraw();
         }
-    }
-
-    function initializePot() internal {
-        vm.startBroadcast(deployerPrivateKey);
-        token.mint(100 ether);
-        token.approve(address(lottery), type(uint256).max);
-        token.transfer(address(lottery), 100 ether);
-    }
-
-    function finalizePotRaise() internal {
-        vm.broadcast(deployerPrivateKey);
-        lottery.finalizeInitialPotRaise();
     }
 
     function buyTickets() internal {

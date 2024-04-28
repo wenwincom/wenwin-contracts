@@ -11,9 +11,6 @@ error RewardTokenZero();
 /// @dev Provided draw cooldown period >= drawPeriod
 error DrawPeriodInvalidSetup();
 
-/// @dev Provided initial pot deadline set to be in past
-error InitialPotPeriodTooShort();
-
 /// @dev Provided ticket price is zero
 error TicketPriceZero();
 
@@ -35,9 +32,9 @@ error InvalidFixedRewardSetup();
 /// @dev Trying to finalize initial pot raise before the deadline
 error FinalizingInitialPotBeforeDeadline();
 
-/// @dev Raised insufficient funds for the initial pot
-/// @param potSize size of the pot raised
-error RaisedInsufficientFunds(uint256 potSize);
+/// @dev Insufficient funds for the initial pot
+/// @param potSize size of the pot
+error InsufficientInitialPot(uint256 potSize);
 
 /// @dev Jackpot is not yet initialized, it means we are still in initial pot raise timeframe
 error JackpotNotInitialized();
@@ -75,6 +72,8 @@ struct LotterySetupParams {
     uint256 expectedPayout;
     /// @dev Array of fixed rewards per each non jackpot win
     uint256[] fixedRewards;
+    /// @dev Inital pot size
+    uint256 initialPot;
 }
 
 interface ILotterySetup {
@@ -93,15 +92,9 @@ interface ILotterySetup {
         uint8 indexed selectionSize,
         uint8 indexed selectionMax,
         uint256 expectedPayout,
-        uint256[] fixedRewards
+        uint256[] fixedRewards,
+        uint256 initialPot
     );
-
-    /// @dev Triggered when the initial pot raise period is over
-    /// @param amountRaised Total amount raised during this period
-    event InitialPotPeriodFinalized(uint256 indexed amountRaised);
-
-    /// @return minPot Minimum amount to be raised in initial funding period
-    function minInitialPot() external view returns (uint256 minPot);
 
     /// @return bound Maximum base jackpot
     function jackpotBound() external view returns (uint256 bound);
@@ -142,9 +135,6 @@ interface ILotterySetup {
     /// @return period Period between 2 draws
     function drawPeriod() external view returns (uint256 period);
 
-    /// @return topUpEndsAt Timestamp when initial pot raising is finished
-    function initialPotDeadline() external view returns (uint256 topUpEndsAt);
-
     /// @return period Cooldown period, just before draw is scheduled, at this time tickets cannot be registered
     function drawCoolDownPeriod() external view returns (uint256 period);
 
@@ -157,7 +147,4 @@ interface ILotterySetup {
     /// @param drawId Draw identifier we check deadline for
     /// @return time Timestamp after which tickets can not be bought
     function ticketRegistrationDeadline(uint128 drawId) external view returns (uint256 time);
-
-    /// @dev Finalize the initial pot raising and initialize jackpot
-    function finalizeInitialPotRaise() external;
 }

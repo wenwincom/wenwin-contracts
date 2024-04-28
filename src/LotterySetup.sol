@@ -12,7 +12,6 @@ import "src/Ticket.sol";
 contract LotterySetup is ILotterySetup {
     using PercentageMath for uint256;
 
-    uint256 public immutable override minInitialPot;
     uint256 public immutable override jackpotBound;
     uint256 public immutable override maxPot;
 
@@ -20,9 +19,8 @@ contract LotterySetup is ILotterySetup {
 
     uint256 public immutable override ticketPrice;
 
-    uint256 public override initialPot;
+    uint256 public immutable override initialPot;
 
-    uint256 public immutable override initialPotDeadline;
     uint256 internal immutable firstDrawSchedule;
     uint256 public immutable override drawPeriod;
     uint256 public immutable override drawCoolDownPeriod;
@@ -84,14 +82,12 @@ contract LotterySetup is ILotterySetup {
         ) {
             revert DrawPeriodInvalidSetup();
         }
-        initialPotDeadline = lotterySetupParams.drawSchedule.firstDrawScheduledAt - shortestPeriod;
-        // slither-disable-next-line timestamp
-        if (initialPotDeadline < (block.timestamp + shortestPeriod)) {
-            revert InitialPotPeriodTooShort();
-        }
 
         uint256 tokenUnit = 10 ** IERC20Metadata(address(lotterySetupParams.token)).decimals();
-        minInitialPot = 4 * tokenUnit;
+        if (lotterySetupParams.initialPot < 4 * tokenUnit) {
+            revert InsufficientInitialPot(lotterySetupParams.initialPot);
+        }
+
         jackpotBound = 2_000_000 * tokenUnit;
         maxPot = 6_660_000 * tokenUnit;
         rewardToken = lotterySetupParams.token;
@@ -103,6 +99,9 @@ contract LotterySetup is ILotterySetup {
         selectionMax = lotterySetupParams.selectionMax;
         expectedPayout = lotterySetupParams.expectedPayout;
 
+        rewardToken.transferFrom(msg.sender, address(this), lotterySetupParams.initialPot);
+        initialPot = lotterySetupParams.initialPot;
+
         nonJackpotFixedRewards = packFixedRewards(lotterySetupParams.fixedRewards);
 
         emit LotteryDeployed(
@@ -112,16 +111,9 @@ contract LotterySetup is ILotterySetup {
             lotterySetupParams.selectionSize,
             lotterySetupParams.selectionMax,
             lotterySetupParams.expectedPayout,
-            lotterySetupParams.fixedRewards
+            lotterySetupParams.fixedRewards,
+            lotterySetupParams.initialPot
         );
-    }
-
-    modifier requireJackpotInitialized() {
-        // slither-disable-next-line incorrect-equality
-        if (initialPot == 0) {
-            revert JackpotNotInitialized();
-        }
-        _;
     }
 
     modifier beforeTicketRegistrationDeadline(uint128 drawId) {
@@ -142,26 +134,6 @@ contract LotterySetup is ILotterySetup {
             uint256 extracted = (nonJackpotFixedRewards & mask) >> (winTier * 16);
             return extracted * (10 ** (IERC20Metadata(address(rewardToken)).decimals() - 1));
         }
-    }
-
-    function finalizeInitialPotRaise() external override {
-        if (initialPot > 0) {
-            revert JackpotAlreadyInitialized();
-        }
-        // slither-disable-next-line timestamp
-        if (block.timestamp <= initialPotDeadline) {
-            revert FinalizingInitialPotBeforeDeadline();
-        }
-        uint256 raised = rewardToken.balanceOf(address(this));
-        if (raised < minInitialPot) {
-            revert RaisedInsufficientFunds(raised);
-        }
-        initialPot = raised;
-
-        // must hold after this call, this will be used as a check that jackpot is initialized
-        assert(initialPot > 0);
-
-        emit InitialPotPeriodFinalized(raised);
     }
 
     function drawScheduledAt(uint128 drawId) public view override returns (uint256 time) {
