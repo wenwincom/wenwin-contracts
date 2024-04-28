@@ -118,7 +118,7 @@ contract LotterySetup is ILotterySetup {
 
     modifier beforeTicketRegistrationDeadline(uint128 drawId) {
         // slither-disable-next-line timestamp
-        if (block.timestamp > ticketRegistrationDeadline(drawId)) {
+        if (block.timestamp >= ticketRegistrationDeadline(drawId)) {
             revert TicketRegistrationClosed(drawId);
         }
         _;

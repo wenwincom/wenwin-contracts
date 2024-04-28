@@ -124,7 +124,7 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
 
     function executeDraw() external override whenNotExecutingDraw {
         // slither-disable-next-line timestamp
-        if (block.timestamp < drawScheduledAt(currentDraw)) {
+        if (block.timestamp <= drawScheduledAt(currentDraw)) {
             revert ExecutingDrawTooEarly();
         }
         returnUnclaimedJackpotToThePot();
