@@ -3,8 +3,11 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "src/LotteryMath.sol";
+import "src/PercentageMath.sol";
 
 contract LotteryMathTest is Test {
+    using PercentageMath for uint256;
+
     // solhint-disable-next-line no-empty-blocks
     function setUp() public { }
 
@@ -90,5 +93,17 @@ contract LotteryMathTest is Test {
         ticketPrice = bound(ticketPrice, 1e18, 5e18);
         ticketsSold = bound(ticketsSold, 1, 1e12);
         assertEq((ticketsSold * ticketPrice) / 10, LotteryMath.calculateFees(ticketPrice, ticketsSold, true));
+    }
+
+    function testCalculateNewProfit(int256 oldProfit, uint256 ticketsSold, uint256 expectedPayout) public {
+        uint256 ticketPrice = 1.5e18;
+        oldProfit = bound(oldProfit, -1e27, 1e27);
+        ticketsSold = bound(ticketsSold, 1, 1e7);
+        expectedPayout = bound(expectedPayout, 1, ticketPrice.getPercentage(LotteryMath.TICKET_PRICE_TO_POT) - 1);
+
+        assertGe(
+            LotteryMath.calculateNewProfit(oldProfit, ticketsSold, ticketPrice, false, 1e24, expectedPayout),
+            (oldProfit < 0 ? oldProfit : int256(0))
+        );
     }
 }
