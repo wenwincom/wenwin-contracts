@@ -168,7 +168,7 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
         if (!ticketInfo.claimed) {
             uint120 _winningTicket = winningTicket[ticketInfo.drawId];
             winTier = TicketUtils.ticketWinTier(ticketInfo.combination, _winningTicket, selectionSize, selectionMax);
-            if (block.timestamp <= ticketRegistrationDeadline(ticketInfo.drawId + LotteryMath.DRAWS_PER_YEAR)) {
+            if (block.timestamp < ticketRegistrationDeadline(ticketInfo.drawId + LotteryMath.DRAWS_PER_YEAR)) {
                 claimableAmount = winAmount[ticketInfo.drawId][winTier];
             }
         }
