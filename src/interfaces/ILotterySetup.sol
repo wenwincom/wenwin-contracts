@@ -26,6 +26,9 @@ error SelectionSizeTooBig();
 /// @dev Provided expected payout is too low or too big
 error InvalidExpectedPayout();
 
+/// @dev Fixed reward for winTier is over max
+error FixedRewardIsOverMax();
+
 /// @dev Invalid fixed rewards setup was provided
 error InvalidFixedRewardSetup();
 

@@ -607,7 +607,88 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
+        invalidFixedRewards[0] = 0;
+        invalidFixedRewards[1] = 1e18;
+        invalidFixedRewards[2] = 100e18;
+        invalidFixedRewards[3] = 6554e18;
+        vm.expectRevert(FixedRewardIsOverMax.selector);
+        new Lottery(
+            LotterySetupParams(
+                rewardToken,
+                drawSchedule,
+                TICKET_PRICE,
+                SELECTION_SIZE,
+                SELECTION_MAX,
+                EXPECTED_PAYOUT,
+                invalidFixedRewards,
+                5e18
+            ),
+            rewardsRecipient,
+            MAX_RN_REQUEST_DELAY,
+            ""
+        );
+
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
+        invalidFixedRewards[0] = 0;
+        invalidFixedRewards[1] = 1e18;
+        invalidFixedRewards[2] = 100e18;
+        invalidFixedRewards[3] = 6554e18;
+        vm.expectRevert(FixedRewardIsOverMax.selector);
+        new Lottery(
+            LotterySetupParams(
+                rewardToken,
+                drawSchedule,
+                TICKET_PRICE,
+                SELECTION_SIZE,
+                SELECTION_MAX,
+                EXPECTED_PAYOUT,
+                invalidFixedRewards,
+                5e18
+            ),
+            rewardsRecipient,
+            MAX_RN_REQUEST_DELAY,
+            ""
+        );
+
         vm.stopPrank();
+    }
+
+    function testValidMaxFixedReward() public {
+        LotteryDrawSchedule memory drawSchedule =
+            LotteryDrawSchedule(block.timestamp + 3 * PERIOD, PERIOD, COOL_DOWN_PERIOD);
+
+        uint256 tokenUnit = 10 ** rewardToken.decimals();
+        vm.startPrank(address(987_651_234));
+        rewardToken.mint(5e18);
+        address predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
+        uint256[] memory validMaxFixedRewards = new uint256[](SELECTION_SIZE);
+        validMaxFixedRewards[0] = 0;
+        validMaxFixedRewards[1] = 1e18;
+        validMaxFixedRewards[2] = 100e18;
+        validMaxFixedRewards[3] = 6553e18;
+        Lottery lotterySetup = new Lottery(
+            LotterySetupParams(
+                rewardToken,
+                drawSchedule,
+                TICKET_PRICE,
+                SELECTION_SIZE,
+                SELECTION_MAX,
+                EXPECTED_PAYOUT,
+                validMaxFixedRewards,
+                5e18
+            ),
+            rewardsRecipient,
+            MAX_RN_REQUEST_DELAY,
+            ""
+        );
+
+        assertEq(lotterySetup.fixedReward(3) / tokenUnit, 6553);
     }
 
     // Token URI
