@@ -95,7 +95,7 @@ abstract contract LotteryTestBase is Test {
     }
 
     function finalizeDraw(uint256 randomNumber) internal {
-        vm.warp(lottery.drawScheduledAt(lottery.currentDraw()));
+        vm.warp(lottery.drawScheduledAt(lottery.currentDraw()) + 1);
         lottery.executeDraw();
         vm.prank(randomNumberSource);
         lottery.onRandomNumberFulfilled(randomNumber);

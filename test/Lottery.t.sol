@@ -72,7 +72,7 @@ contract LotteryTest is LotteryTestBase {
 
         vm.stopPrank();
 
-        vm.warp(lottery.drawScheduledAt(lottery.currentDraw()));
+        vm.warp(lottery.drawScheduledAt(lottery.currentDraw()) + 1);
         lottery.executeDraw();
 
         // no winning ticket
@@ -166,7 +166,7 @@ contract LotteryTest is LotteryTestBase {
         vm.expectRevert(ExecutingDrawTooEarly.selector);
         lottery.executeDraw();
 
-        vm.warp(lottery.drawScheduledAt(lottery.currentDraw()));
+        vm.warp(lottery.drawScheduledAt(lottery.currentDraw()) + 1);
         lottery.executeDraw();
 
         vm.expectRevert(DrawAlreadyInProgress.selector);
@@ -188,7 +188,7 @@ contract LotteryTest is LotteryTestBase {
         uint256 ticketId = buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
         vm.stopPrank();
 
-        vm.warp(block.timestamp + 60 * 60 * 24);
+        vm.warp(block.timestamp + 60 * 60 * 24 + 1);
         lottery.executeDraw();
 
         // winning ticket
