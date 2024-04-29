@@ -24,7 +24,7 @@ contract StakingTest is LotteryTestBase {
         lottery.changeFeeRecipient(address(staking));
 
         vm.prank(OWNER);
-        stakingToken.transfer(STAKER, 10_000);
+        stakingToken.transfer(STAKER, 10_000e18);
     }
 
     function testGetRewardsSingleStaker() public {
@@ -169,5 +169,49 @@ contract StakingTest is LotteryTestBase {
         uint256 preWithdrawalBalance = stakingToken.balanceOf(STAKER);
         staking.withdraw(amount);
         assertEq(stakingToken.balanceOf(STAKER) - preWithdrawalBalance, amount);
+    }
+
+    function testDelayFirstStake() public {
+        assertEq(staking.totalSupply(), 0);
+        assertEq(rewardToken.balanceOf(address(staking)), 0);
+        assertEq(staking.rewardPerTokenStored(), 0);
+
+        buySameTickets(lottery.currentDraw(), uint120(0x0F), address(0), 4);
+        vm.prank(address(staking));
+        lottery.claimFees();
+        assertEq(staking.totalSupply(), 0);
+        assertEq(rewardToken.balanceOf(address(staking)), 4e18);
+        assertEq(staking.rewardPerTokenStored(), 0);
+
+        vm.startPrank(STAKER);
+        stakingToken.approve(address(staking), 1e18);
+        staking.stake(1e18);
+        vm.stopPrank();
+        assertEq(staking.totalSupply(), 1e18);
+        assertEq(rewardToken.balanceOf(address(staking)), 4e18);
+        assertEq(staking.rewardPerTokenStored(), 0);
+
+        // buy one ticket and get rewards
+        buySameTickets(lottery.currentDraw(), uint120(0x0F), address(0), 1);
+
+        vm.prank(address(staking));
+        lottery.claimFees();
+        assertEq(staking.totalSupply(), 1e18);
+        assertEq(rewardToken.balanceOf(address(staking)), 5e18);
+        assertEq(staking.rewardPerTokenStored(), 0);
+
+        vm.prank(STAKER);
+        staking.exit();
+        assertEq(staking.totalSupply(), 0);
+        assertEq(rewardToken.balanceOf(address(staking)), 0);
+        assertEq(staking.rewardPerTokenStored(), 5e18);
+
+        buySameTickets(lottery.currentDraw(), uint120(0x0F), address(0), 1);
+
+        vm.prank(address(staking));
+        lottery.claimFees();
+        assertEq(staking.totalSupply(), 0);
+        assertEq(rewardToken.balanceOf(address(staking)), 1e18);
+        assertEq(staking.rewardPerTokenStored(), 5e18);
     }
 }
