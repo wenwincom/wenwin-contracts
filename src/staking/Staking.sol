@@ -117,7 +117,9 @@ contract Staking is IStaking, ERC20 {
     function _updateReward(address account) internal {
         uint256 currentRewardPerToken = rewardPerToken();
         rewardPerTokenStored = currentRewardPerToken;
-        lastUpdateTicketId = lottery.nextTicketId();
+        if (totalSupply() != 0) {
+            lastUpdateTicketId = lottery.nextTicketId();
+        }
         rewards[account] = earned(account);
         userRewardPerTokenPaid[account] = currentRewardPerToken;
     }
