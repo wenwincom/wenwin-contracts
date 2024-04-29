@@ -36,6 +36,8 @@ contract LotterySetup is ILotterySetup {
     uint256 private constant DRAW_PERIOD_MASK = 0xFFFFFFFF;
     uint256 private constant MIN_DRAW_PERIOD = 60 * 5; // 5 minutes
 
+    uint256 private constant MAX_REWARD_PER_WIN_TIER = 6553;
+
     /// @dev Constructs a new lottery contract
     /// @param lotterySetupParams Setup parameter for the lottery
     // solhint-disable-next-line code-complexity
@@ -178,7 +180,12 @@ contract LotterySetup is ILotterySetup {
             revert InvalidFixedRewardSetup();
         }
         uint256 divisor = 10 ** (IERC20Metadata(address(rewardToken)).decimals() - 1);
+        uint256 maxRewardPerWinTierInTokenDecimals =
+            MAX_REWARD_PER_WIN_TIER * (10 ** (IERC20Metadata(address(rewardToken)).decimals()));
         for (uint8 winTier = 1; winTier < selectionSize; ++winTier) {
+            if (rewards[winTier] > maxRewardPerWinTierInTokenDecimals) {
+                revert FixedRewardIsOverMax();
+            }
             uint16 reward = uint16(rewards[winTier] / divisor);
             if ((rewards[winTier] % divisor) != 0) {
                 revert InvalidFixedRewardSetup();
