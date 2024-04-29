@@ -204,7 +204,7 @@ contract LotteryTest is LotteryTestBase {
         claimTicket(ticketId);
 
         vm.prank(USER);
-        vm.expectRevert(abi.encodeWithSelector(NothingToClaim.selector, ticketId));
+        vm.expectRevert(abi.encodeWithSelector(UnauthorizedClaim.selector, ticketId, USER));
         claimTicket(ticketId);
 
         assertEq(rewardToken.balanceOf(USER), lottery.winAmount(drawId, SELECTION_SIZE));
@@ -631,6 +631,22 @@ contract LotteryTest is LotteryTestBase {
         lottery.setBaseURI(baseURI);
         assertEq(lottery.tokenURI(0), string.concat(baseURI, "0"));
         vm.stopPrank();
+    }
+
+    function testClaimBeforeTransfer() public {
+        uint128 drawId = lottery.currentDraw();
+        uint256 ticketId = initTickets(drawId, 0x8E);
+        // this will give winning ticket of 0x0F so 0x8E will have 3/4
+        finalizeDraw(0);
+        uint8 winTier = 3;
+        checkTicketWinTier(drawId, 0x8E, winTier);
+
+        address BUYER = address(456);
+        vm.prank(USER);
+        claimTicket(ticketId); // USER front-run trade transaction and claims rewards
+        vm.prank(USER);
+        vm.expectRevert("ERC721: invalid token ID");
+        lottery.transferFrom(USER, BUYER, ticketId);
     }
 
     // Helper functions
