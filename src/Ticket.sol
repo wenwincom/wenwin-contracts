@@ -21,13 +21,9 @@ abstract contract Ticket is ITicket, ERC721, Ownable2Step {
         _baseTokenURI = baseURI;
     }
 
-    function markAsClaimed(uint256 ticketId) internal {
-        ticketsInfo[ticketId].claimed = true;
-    }
-
     function mint(address to, uint128 drawId, uint120 combination) internal returns (uint256 ticketId) {
         ticketId = nextTicketId++;
-        ticketsInfo[ticketId] = TicketInfo(drawId, combination, false);
+        ticketsInfo[ticketId] = TicketInfo(drawId, combination);
         _mint(to, ticketId);
     }
 

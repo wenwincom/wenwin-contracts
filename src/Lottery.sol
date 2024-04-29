@@ -67,7 +67,7 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
     /// @dev Checks that ticket owner is caller of the function. Reverts if not called by ticket owner.
     /// @param ticketId Ticket id we are checking owner for.
     modifier onlyTicketOwner(uint256 ticketId) {
-        if (ownerOf(ticketId) != msg.sender) {
+        if (_ownerOf(ticketId) != msg.sender) {
             revert UnauthorizedClaim(ticketId, msg.sender);
         }
         _;
@@ -165,10 +165,10 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
 
     function claimable(uint256 ticketId) external view override returns (uint256 claimableAmount, uint8 winTier) {
         TicketInfo memory ticketInfo = ticketsInfo[ticketId];
-        if (!ticketInfo.claimed) {
+        if (_ownerOf(ticketId) != address(0)) {
             uint120 _winningTicket = winningTicket[ticketInfo.drawId];
             winTier = TicketUtils.ticketWinTier(ticketInfo.combination, _winningTicket, selectionSize, selectionMax);
-            if (block.timestamp <= ticketRegistrationDeadline(ticketInfo.drawId + LotteryMath.DRAWS_PER_YEAR)) {
+            if (block.timestamp < ticketRegistrationDeadline(ticketInfo.drawId + LotteryMath.DRAWS_PER_YEAR)) {
                 claimableAmount = winAmount[ticketInfo.drawId][winTier];
             }
         }
@@ -275,14 +275,13 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
     }
 
     function claimWinningTicket(uint256 ticketId) private onlyTicketOwner(ticketId) returns (uint256 claimedAmount) {
-        uint256 winTier;
-        (claimedAmount, winTier) = this.claimable(ticketId);
+        (claimedAmount,) = this.claimable(ticketId);
         if (claimedAmount == 0) {
             revert NothingToClaim(ticketId);
         }
 
         unclaimedCount[ticketsInfo[ticketId].drawId][ticketsInfo[ticketId].combination]--;
-        markAsClaimed(ticketId);
+        _burn(ticketId);
         emit ClaimedTicket(msg.sender, ticketId, claimedAmount);
     }
 

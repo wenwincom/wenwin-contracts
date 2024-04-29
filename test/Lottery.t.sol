@@ -204,7 +204,7 @@ contract LotteryTest is LotteryTestBase {
         claimTicket(ticketId);
 
         vm.prank(USER);
-        vm.expectRevert(abi.encodeWithSelector(NothingToClaim.selector, ticketId));
+        vm.expectRevert(abi.encodeWithSelector(UnauthorizedClaim.selector, ticketId, USER));
         claimTicket(ticketId);
 
         assertEq(rewardToken.balanceOf(USER), lottery.winAmount(drawId, SELECTION_SIZE));
@@ -607,7 +607,88 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
+        invalidFixedRewards[0] = 0;
+        invalidFixedRewards[1] = 1e18;
+        invalidFixedRewards[2] = 100e18;
+        invalidFixedRewards[3] = 6554e18;
+        vm.expectRevert(FixedRewardIsOverMax.selector);
+        new Lottery(
+            LotterySetupParams(
+                rewardToken,
+                drawSchedule,
+                TICKET_PRICE,
+                SELECTION_SIZE,
+                SELECTION_MAX,
+                EXPECTED_PAYOUT,
+                invalidFixedRewards,
+                5e18
+            ),
+            rewardsRecipient,
+            MAX_RN_REQUEST_DELAY,
+            ""
+        );
+
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
+        invalidFixedRewards[0] = 0;
+        invalidFixedRewards[1] = 1e18;
+        invalidFixedRewards[2] = 100e18;
+        invalidFixedRewards[3] = 6554e18;
+        vm.expectRevert(FixedRewardIsOverMax.selector);
+        new Lottery(
+            LotterySetupParams(
+                rewardToken,
+                drawSchedule,
+                TICKET_PRICE,
+                SELECTION_SIZE,
+                SELECTION_MAX,
+                EXPECTED_PAYOUT,
+                invalidFixedRewards,
+                5e18
+            ),
+            rewardsRecipient,
+            MAX_RN_REQUEST_DELAY,
+            ""
+        );
+
         vm.stopPrank();
+    }
+
+    function testValidMaxFixedReward() public {
+        LotteryDrawSchedule memory drawSchedule =
+            LotteryDrawSchedule(block.timestamp + 3 * PERIOD, PERIOD, COOL_DOWN_PERIOD);
+
+        uint256 tokenUnit = 10 ** rewardToken.decimals();
+        vm.startPrank(address(987_651_234));
+        rewardToken.mint(5e18);
+        address predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
+        uint256[] memory validMaxFixedRewards = new uint256[](SELECTION_SIZE);
+        validMaxFixedRewards[0] = 0;
+        validMaxFixedRewards[1] = 1e18;
+        validMaxFixedRewards[2] = 100e18;
+        validMaxFixedRewards[3] = 6553e18;
+        Lottery lotterySetup = new Lottery(
+            LotterySetupParams(
+                rewardToken,
+                drawSchedule,
+                TICKET_PRICE,
+                SELECTION_SIZE,
+                SELECTION_MAX,
+                EXPECTED_PAYOUT,
+                validMaxFixedRewards,
+                5e18
+            ),
+            rewardsRecipient,
+            MAX_RN_REQUEST_DELAY,
+            ""
+        );
+
+        assertEq(lotterySetup.fixedReward(3) / tokenUnit, 6553);
     }
 
     // Token URI
@@ -631,6 +712,22 @@ contract LotteryTest is LotteryTestBase {
         lottery.setBaseURI(baseURI);
         assertEq(lottery.tokenURI(0), string.concat(baseURI, "0"));
         vm.stopPrank();
+    }
+
+    function testClaimBeforeTransfer() public {
+        uint128 drawId = lottery.currentDraw();
+        uint256 ticketId = initTickets(drawId, 0x8E);
+        // this will give winning ticket of 0x0F so 0x8E will have 3/4
+        finalizeDraw(0);
+        uint8 winTier = 3;
+        checkTicketWinTier(drawId, 0x8E, winTier);
+
+        address BUYER = address(456);
+        vm.prank(USER);
+        claimTicket(ticketId); // USER front-run trade transaction and claims rewards
+        vm.prank(USER);
+        vm.expectRevert("ERC721: invalid token ID");
+        lottery.transferFrom(USER, BUYER, ticketId);
     }
 
     // Helper functions
