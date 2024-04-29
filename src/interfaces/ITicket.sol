@@ -13,8 +13,6 @@ interface ITicket is IERC721 {
         uint128 drawId;
         /// @dev Ticket combination that is packed as uint120.
         uint120 combination;
-        /// @dev If ticket is already claimed, in case of winning ticket.
-        bool claimed;
     }
 
     /// @dev Identifier that will be assigned to the next minted token
@@ -25,8 +23,7 @@ interface ITicket is IERC721 {
     /// @param ticketId Unique identifier of the ticket.
     /// @return drawId Unique identifier of the draw ticket was bought for.
     /// @return combination Ticket combination that is packed as uint120.
-    /// @return claimed If ticket is already claimed, in case of winning ticket.
-    function ticketsInfo(uint256 ticketId) external view returns (uint128 drawId, uint120 combination, bool claimed);
+    function ticketsInfo(uint256 ticketId) external view returns (uint128 drawId, uint120 combination);
 
     /// @dev Sets the base token URI for all token IDs.
     /// @param newBaseTokenURI New base token URI.
