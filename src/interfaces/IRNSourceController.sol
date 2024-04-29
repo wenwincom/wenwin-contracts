@@ -36,8 +36,7 @@ error RandomNumberFulfillmentUnauthorized();
 interface IRNSourceController is IRNSourceConsumer {
     /// @dev Emitted on request retry.
     /// @param failedSource The address of the failed source
-    /// @param numberOfFailedAttempts A total number of failed attempts for @param failedSource
-    event Retry(IRNSource indexed failedSource, uint256 indexed numberOfFailedAttempts);
+    event Retry(IRNSource indexed failedSource);
 
     /// @dev Emitted when a new randomness source is set.
     /// @param source The randomness source which was set
@@ -54,15 +53,6 @@ interface IRNSourceController is IRNSourceConsumer {
 
     /// @dev The current randomness source.
     function source() external view returns (IRNSource source);
-
-    /// @dev Retrieves the number of failed sequential request attempts for the current source.
-    function failedSequentialAttempts() external view returns (uint256 numberOfAttempts);
-
-    /// @dev Retrieves the timestamp at which the current source reached `maxFailedAttempts` number of retries.
-    function maxFailedAttemptsReachedAt() external view returns (uint256 numberOfAttempts);
-
-    /// @return numberOfAttempts The number of the maximum failed attempts after the source will be removed
-    function maxFailedAttempts() external view returns (uint256 numberOfAttempts);
 
     /// @return timestamp A timestamp for the last data request
     function lastRequestTimestamp() external view returns (uint256 timestamp);

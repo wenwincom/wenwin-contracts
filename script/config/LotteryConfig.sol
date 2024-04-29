@@ -30,7 +30,6 @@ contract LotteryConfig is Script {
                 vm.envUint("LOTTERY_INITIAL_POT")
             ),
             vm.envAddress("TREASURY_ADDRESS"),
-            vm.envUint("SOURCE_MAX_FAILED_ATTEMPTS"),
             vm.envUint("SOURCE_MAX_REQUEST_DELAY"),
             vm.envString("LOTTERY_TOKEN_BASE_URI")
         );

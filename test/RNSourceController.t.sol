@@ -30,16 +30,6 @@ contract RNSourceControllerTest is Test {
         );
     }
 
-    function testRetryIncrementsFailedSequentialAttempts() public {
-        sourceController.request();
-
-        vm.warp(block.timestamp + sourceController.maxRequestDelay() + 1);
-        assertEq(sourceController.failedSequentialAttempts(), 0);
-
-        sourceController.retry();
-        assertEq(sourceController.failedSequentialAttempts(), 1);
-    }
-
     function testRetryFailsBeforeRequestDelayThresholdIsReached() public {
         sourceController.request();
 
@@ -64,45 +54,10 @@ contract RNSourceControllerTest is Test {
         sourceController.swapSource(IRNSource(address(0)));
     }
 
-    function testSwapSourceFailsWithInsufficientFailedAttempts() public {
-        sourceController.request();
-
-        uint256 lastRetryAttempt = block.timestamp;
-        for (uint256 i = 0; i < (sourceController.maxFailedAttempts() - 1); i++) {
-            lastRetryAttempt += sourceController.maxRequestDelay() + 1;
-            vm.warp(lastRetryAttempt);
-            sourceController.retry();
-        }
-
-        vm.expectRevert(NotEnoughFailedAttempts.selector);
-        sourceController.swapSource(source2);
-    }
-
-    function testSwapSourceFailsWithInsufficientFailedAttemptsWhenNotEnoughTimeSinceReachingMaxFailedAttempts()
-        public
-    {
-        sourceController.request();
-
-        uint256 lastRetryAttempt = block.timestamp + sourceController.maxRequestDelay() + 1;
-        for (uint256 i = 0; i < sourceController.maxFailedAttempts(); i++) {
-            vm.warp(lastRetryAttempt);
-            sourceController.retry();
-            lastRetryAttempt += sourceController.maxRequestDelay() + 1;
-        }
-
-        vm.expectRevert(NotEnoughFailedAttempts.selector);
-        sourceController.swapSource(source2);
-    }
-
     function testSuccessfulSwapSource() public {
         sourceController.request();
 
         uint256 lastRetryAttempt = block.timestamp + sourceController.maxRequestDelay() + 1;
-        for (uint256 i = 0; i < sourceController.maxFailedAttempts(); i++) {
-            vm.warp(lastRetryAttempt);
-            sourceController.retry();
-            lastRetryAttempt += sourceController.maxRequestDelay() + 1;
-        }
         vm.warp(lastRetryAttempt);
 
         vm.expectCall(address(source2), abi.encodeWithSelector(IRNSource.requestRandomNumber.selector));

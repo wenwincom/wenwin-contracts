@@ -26,7 +26,6 @@ abstract contract LotteryTestBase is Test {
 
     uint256[] public fixedRewards;
 
-    uint256 public constant MAX_RN_FAILED_ATTEMPTS = 5;
     uint256 public constant MAX_RN_REQUEST_DELAY = 30 minutes;
 
     function setUp() public virtual {
@@ -56,7 +55,6 @@ abstract contract LotteryTestBase is Test {
                 1e24
             ),
             rewardsRecipient,
-            MAX_RN_FAILED_ATTEMPTS,
             MAX_RN_REQUEST_DELAY,
             ""
         );
