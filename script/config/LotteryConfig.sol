@@ -4,7 +4,6 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "forge-std/Script.sol";
-import "src/interfaces/IReferralSystem.sol";
 import "src/interfaces/IRNSourceController.sol";
 import "src/Lottery.sol";
 

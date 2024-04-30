@@ -4,11 +4,10 @@ pragma solidity 0.8.19;
 
 import "forge-std/Script.sol";
 import "script/config/LotteryConfig.sol";
-import "script/config/ReferralSystemConfig.sol";
 import "script/config/RewardTokenConfig.sol";
 import "script/config/RNSourceConfig.sol";
 
-contract DeployAllScript is Script, LotteryConfig, ReferralSystemConfig, RewardTokenConfig, RNSourceConfig {
+contract DeployAllScript is Script, LotteryConfig, RewardTokenConfig, RNSourceConfig {
     // solhint-disable-next-line no-empty-blocks
     function setUp() public { }
 
