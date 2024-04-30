@@ -5,7 +5,6 @@ pragma solidity 0.8.19;
 import "src/interfaces/ILotterySetup.sol";
 import "src/interfaces/IRNSourceController.sol";
 import "src/interfaces/ITicket.sol";
-import "src/interfaces/IReferralSystem.sol";
 import "src/interfaces/IFeeCollector.sol";
 
 /// @dev Invalid caller to the function.

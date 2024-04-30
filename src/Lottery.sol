@@ -4,7 +4,6 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "src/ReferralSystem.sol";
 import "src/RNSourceController.sol";
 import "src/staking/Staking.sol";
 import "src/LotterySetup.sol";
