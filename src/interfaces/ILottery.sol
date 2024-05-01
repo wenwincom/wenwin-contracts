@@ -97,9 +97,6 @@ interface ILottery is ITicket, ILotterySetup, IRNSourceController, IFeeCollector
     /// @param amount Amount of tokens rescued.
     event TokenRescued(IERC20 token, address to, uint256 amount);
 
-    /// @return ticketId Next ticket id to be minted after the last draw was finalized.
-    function lastDrawFinalTicketId() external view returns (uint256 ticketId);
-
     /// @return Is executing draw in progress.
     function drawExecutionInProgress() external view returns (bool);
 
