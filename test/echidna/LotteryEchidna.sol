@@ -141,7 +141,7 @@ contract LotteryEchidna {
         uint256[] memory ticketIdsFilter;
         uint256 filterCounter;
         if (isRandom) {
-            uint256 totalSupply = lottery.lastDrawFinalTicketId();
+            uint256 totalSupply = lottery.nextTicketId();
             ticketIdsFilter = new uint256[](ticketIdsRandom.length);
             for (uint256 counter = 0; counter < ticketIdsRandom.length; ++counter) {
                 uint256 ticketId = ticketIdsRandom[counter] % totalSupply;

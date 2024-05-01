@@ -27,8 +27,6 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
 
     address public override feeRecipient;
 
-    uint256 public override lastDrawFinalTicketId;
-
     bool public override drawExecutionInProgress;
     uint128 public override currentDraw;
 
@@ -242,8 +240,6 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
         );
         winningTicket[drawFinalized] = _winningTicket;
         drawExecutionInProgress = false;
-
-        lastDrawFinalTicketId = nextTicketId;
 
         emit FinishedExecutingDraw(drawFinalized, randomNumber, _winningTicket);
     }
