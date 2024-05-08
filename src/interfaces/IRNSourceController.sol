@@ -42,10 +42,6 @@ interface IRNSourceController is IRNSourceConsumer {
     /// @param source The randomness source which was set
     event SourceSet(IRNSource indexed source);
 
-    /// @dev Emitted on a successful randomness request.
-    /// @param source The source from which randomness was successfully requested
-    event SuccessfulRNRequest(IRNSource indexed source);
-
     /// @dev Emitted on a failed randomness request.
     /// @param source The source from which randomness was unsuccessfully requested
     /// @param reason The reason why the randomness request, directly propagated from the randomness source

@@ -76,22 +76,16 @@ abstract contract RNSourceController is Ownable2Step, IRNSourceController {
         source = newSource;
 
         emit SourceSet(newSource);
-        requestRandomNumberFromSource();
+
+        if (!lastRequestFulfilled) {
+            requestRandomNumberFromSource();
+        }
     }
 
     function requestRandomNumberFromSource() private {
         lastRequestTimestamp = block.timestamp;
         lastRequestFulfilled = false;
 
-        // slither-disable-start uninitialized-local
-        // See Slither issue: https://github.com/crytic/slither/issues/511
-        try source.requestRandomNumber() {
-            emit SuccessfulRNRequest(source);
-        } catch Error(string memory reason) {
-            emit FailedRNRequest(source, bytes(reason));
-        } catch (bytes memory reason) {
-            emit FailedRNRequest(source, reason);
-        }
-        // slither-disable-end uninitialized-local
+        source.requestRandomNumber();
     }
 }
