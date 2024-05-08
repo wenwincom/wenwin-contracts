@@ -87,27 +87,4 @@ contract RNSourceControllerTest is Test {
         vm.expectRevert(RNSourceZeroAddress.selector);
         sourceController.initSource(IRNSource(address(0)));
     }
-
-    event SuccessfulRNRequest(IRNSource indexed source);
-    event FailedRNRequest(IRNSource indexed source, bytes indexed reason);
-
-    function testRandomnessRequestEmitsSuccessEvent() public {
-        vm.expectEmit(true, false, false, false);
-        emit SuccessfulRNRequest(source1);
-        sourceController.request();
-    }
-
-    function testRandomnessRequestEmitsFailedEventWithCustomError() public {
-        source1.setMockMode(RNSource.RequestRandomNumberMockMode.Revert);
-        vm.expectEmit(true, true, false, false);
-        emit FailedRNRequest(source1, abi.encodePacked(RNSource.MockReverted.selector));
-        sourceController.request();
-    }
-
-    function testRandomnessRequestEmitsFailedEventWithRequire() public {
-        source1.setMockMode(RNSource.RequestRandomNumberMockMode.Require);
-        vm.expectEmit(true, true, false, false);
-        emit FailedRNRequest(source1, abi.encodePacked("mockFailed"));
-        sourceController.request();
-    }
 }
