@@ -57,6 +57,7 @@ contract LotterySetup is ILotterySetup {
         if (
             lotterySetupParams.expectedPayout < lotterySetupParams.ticketPrice / 100
                 || lotterySetupParams.expectedPayout >= lotterySetupParams.ticketPrice
+                || lotterySetupParams.expectedPayout == 0
         ) {
             revert InvalidExpectedPayout();
         }
