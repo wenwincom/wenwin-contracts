@@ -81,7 +81,7 @@ contract LotterySetup is ILotterySetup {
         }
         if (
             lotterySetupParams.drawSchedule.drawCoolDownPeriod >= shortestPeriod
-                || lotterySetupParams.drawSchedule.firstDrawScheduledAt < shortestPeriod
+                || lotterySetupParams.drawSchedule.firstDrawScheduledAt <= block.timestamp
         ) {
             revert DrawPeriodInvalidSetup();
         }
