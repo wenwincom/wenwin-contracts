@@ -535,6 +535,17 @@ contract LotteryTest is LotteryTestBase {
         rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(InvalidExpectedPayout.selector);
         new Lottery(
+            LotterySetupParams(rewardToken, drawSchedule, TICKET_PRICE, 17, 20, 0, fixedRewards, 5e18),
+            rewardsRecipient,
+            MAX_RN_REQUEST_DELAY,
+            ""
+        );
+
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
+        vm.expectRevert(InvalidExpectedPayout.selector);
+        new Lottery(
             LotterySetupParams(
                 rewardToken, drawSchedule, TICKET_PRICE, SELECTION_SIZE, SELECTION_MAX, TICKET_PRICE, fixedRewards, 5e18
             ),
