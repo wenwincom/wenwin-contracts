@@ -442,6 +442,29 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
+        uint256 oldTimestamp = block.timestamp;
+        vm.warp(drawSchedule.firstDrawScheduledAt);
+        rewardToken.mint(5e18);
+        predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        rewardToken.approve(predictedAddress, 5e18);
+        vm.expectRevert(DrawPeriodInvalidSetup.selector);
+        new Lottery(
+            LotterySetupParams(
+                rewardToken,
+                drawSchedule,
+                TICKET_PRICE,
+                SELECTION_SIZE,
+                SELECTION_MAX,
+                EXPECTED_PAYOUT,
+                fixedRewards,
+                5e18
+            ),
+            rewardsRecipient,
+            MAX_RN_REQUEST_DELAY,
+            ""
+        );
+        vm.warp(oldTimestamp);
+
         rewardToken.mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
