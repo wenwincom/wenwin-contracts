@@ -1,0 +1,1 @@
+forge verify-contract 0xB319bc8121257d629a2eAbEb8ca8011f9130A3Cf src/rnsources/GelatoRNSource.sol:GelatoRNSource --constructor-args $(cast abi-encode "constructor(address,address)" 0xd71f42cFFf1Ad7E722f0785AFeE8da9aD902eB29 0x51f10b3ac60ff57839e1864a63598f0f5c949a04) --show-standard-json-input > GelatoRNSource.json
