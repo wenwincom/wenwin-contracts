@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 // slither-disable-next-line solc-version
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
-import "forge-std/Script.sol";
+import { IRNSource } from "src/rnsources/interfaces/IRNSource.sol";
 import { API3DaoRNSource } from "src/rnsources/API3DaoRNSource.sol";
+import { GelatoRNSource } from "src/rnsources/GelatoRNSource.sol";
 import { SupraRNSource } from "src/rnsources/SupraRNSource.sol";
 import { VRFv2RNSource } from "src/rnsources/VRFv2RNSource.sol";
-import "test/RNSource.sol";
+import { RNSource } from "test/RNSource.sol";
+import { Script } from "forge-std/Script.sol";
 
 contract RNSourceConfig is Script {
     function getVRFv2RNSource(address authorizedConsumer) internal returns (IRNSource rnSource) {
@@ -50,6 +52,15 @@ contract RNSourceConfig is Script {
         } else {
             rnSource =
                 new SupraRNSource(authorizedConsumer, supraRouter, supraClientWalletAddress, supraRequestConfirmations);
+        }
+    }
+
+    function getGelatoRNSource(address authorizedConsumer) internal returns (IRNSource rnSource) {
+        address gelatoOperator = vm.envAddress("GELATO_OPERATOR");
+        if (gelatoOperator == address(0)) {
+            rnSource = new RNSource(authorizedConsumer);
+        } else {
+            rnSource = new GelatoRNSource(authorizedConsumer, gelatoOperator);
         }
     }
 }
