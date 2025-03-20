@@ -1,0 +1,1 @@
+forge script script/WenWinUSDC.s.sol:WenWinUSDCScript --rpc-url $1 --broadcast -vvvv ${@:2}

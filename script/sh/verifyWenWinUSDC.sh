@@ -1,0 +1,1 @@
+forge verify-contract --rpc-url https://testnet-rpc.monad.xyz --verifier sourcify --verifier-url 'https://sourcify-api-monad.blockvision.org' 0xfda96f777a124fc4027287b8dbab45696541ede3 src/mocks/WenWinUSDC.sol:WenWinUSDC

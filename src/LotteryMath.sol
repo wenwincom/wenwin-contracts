@@ -21,7 +21,7 @@ library LotteryMath {
     /// @dev Percentage of excess pot reserved for bonus
     uint256 public constant EXCESS_BONUS_ALLOCATION = 50 * PercentageMath.ONE_PERCENT;
     /// @dev Number of lottery draws per year
-    uint128 public constant DRAWS_PER_YEAR = 104;
+    uint128 public constant DRAWS_PER_YEAR = 1460; //365 * 4
 
     /// @dev Calculates new cumulative net profit and excess pot
     /// To be called when the draw is finalized
