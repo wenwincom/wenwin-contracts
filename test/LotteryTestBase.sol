@@ -8,7 +8,7 @@ import "./TestToken.sol";
 abstract contract LotteryTestBase is Test {
     Lottery public lottery;
 
-    TestToken public rewardToken;
+    IERC20Metadata public rewardToken;
     uint256 public firstDrawAt;
     uint256 public constant PERIOD = 60 * 60 * 24; // 1 day
     uint256 public constant COOL_DOWN_PERIOD = 60; // 1 min
@@ -29,8 +29,6 @@ abstract contract LotteryTestBase is Test {
     uint256 public constant MAX_RN_REQUEST_DELAY = 30 minutes;
 
     function setUp() public virtual {
-        rewardToken = new TestToken();
-
         firstDrawAt = block.timestamp + 3 * PERIOD;
 
         fixedRewards = new uint256[](SELECTION_SIZE);
@@ -38,26 +36,9 @@ abstract contract LotteryTestBase is Test {
         fixedRewards[2] = 2 * TICKET_PRICE;
         fixedRewards[3] = 3 * TICKET_PRICE;
 
-        vm.startPrank(address(987_651_234));
-        rewardToken.mint(1e24);
-        address predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
-        rewardToken.approve(predictedAddress, 1e24);
+        mintRewardToken();
 
-        lottery = new Lottery(
-            LotterySetupParams(
-                rewardToken,
-                LotteryDrawSchedule(firstDrawAt, PERIOD, COOL_DOWN_PERIOD),
-                TICKET_PRICE,
-                SELECTION_SIZE,
-                SELECTION_MAX,
-                EXPECTED_PAYOUT,
-                fixedRewards,
-                1e24
-            ),
-            rewardsRecipient,
-            MAX_RN_REQUEST_DELAY,
-            ""
-        );
+        lottery = createLottery(rewardToken, firstDrawAt, fixedRewards, rewardsRecipient);
         lottery.initSource(IRNSource(randomNumberSource));
         vm.stopPrank();
 
@@ -74,6 +55,66 @@ abstract contract LotteryTestBase is Test {
         return ticketIds.length > 0 ? ticketIds[0] : 0;
     }
 
+    function finalizeDraw(uint256 randomNumber) internal {
+        vm.warp(lottery.drawScheduledAt(lottery.currentDraw()) + 1);
+        lottery.executeDraw();
+        vm.prank(randomNumberSource);
+        lottery.onRandomNumberFulfilled(randomNumber);
+    }
+
+    function createLottery(
+        IERC20Metadata rewardToken_,
+        uint256 firstDrawAt_,
+        uint256[] memory fixedRewards_,
+        address rewardsRecipient_
+    )
+        internal
+        virtual
+        returns (Lottery);
+
+    function mintRewardToken() internal virtual;
+}
+
+abstract contract LotteryTestBaseERC20 is LotteryTestBase {
+    function setUp() public virtual override {
+        rewardToken = new TestToken();
+        super.setUp();
+    }
+
+    function createLottery(
+        IERC20Metadata rewardToken_,
+        uint256 firstDrawAt_,
+        uint256[] memory fixedRewards_,
+        address rewardsRecipient_
+    )
+        internal
+        override
+        returns (Lottery)
+    {
+        return new Lottery(
+            LotterySetupParams(
+                rewardToken_,
+                LotteryDrawSchedule(firstDrawAt_, PERIOD, COOL_DOWN_PERIOD),
+                TICKET_PRICE,
+                SELECTION_SIZE,
+                SELECTION_MAX,
+                EXPECTED_PAYOUT,
+                fixedRewards_,
+                1e24
+            ),
+            rewardsRecipient_,
+            MAX_RN_REQUEST_DELAY,
+            ""
+        );
+    }
+
+    function mintRewardToken() internal override {
+        vm.startPrank(address(987_651_234));
+        ITestToken(address(rewardToken)).mint(1e24);
+        address predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
+        ITestToken(address(rewardToken)).approve(predictedAddress, 1e24);
+    }
+
     function buySameTickets(
         uint128 drawId,
         uint120 ticket,
@@ -83,7 +124,7 @@ abstract contract LotteryTestBase is Test {
         internal
         returns (uint256[] memory)
     {
-        rewardToken.mint(TICKET_PRICE * count);
+        ITestToken(address(rewardToken)).mint(TICKET_PRICE * count);
         rewardToken.approve(address(lottery), TICKET_PRICE * count);
         uint128[] memory drawIds = new uint128[](count);
         uint120[] memory tickets = new uint120[](count);
@@ -92,12 +133,5 @@ abstract contract LotteryTestBase is Test {
             tickets[i] = ticket;
         }
         return lottery.buyTickets(drawIds, tickets, FRONTEND_ADDRESS, referrer);
-    }
-
-    function finalizeDraw(uint256 randomNumber) internal {
-        vm.warp(lottery.drawScheduledAt(lottery.currentDraw()) + 1);
-        lottery.executeDraw();
-        vm.prank(randomNumberSource);
-        lottery.onRandomNumberFulfilled(randomNumber);
     }
 }

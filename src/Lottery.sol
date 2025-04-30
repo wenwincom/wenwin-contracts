@@ -104,19 +104,11 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
         address frontend,
         address referrer
     )
-        external
+        public
         override
         returns (uint256[] memory ticketIds)
     {
-        if (drawIds.length != tickets.length) {
-            revert DrawsAndTicketsLenMismatch(drawIds.length, tickets.length);
-        }
-        ticketIds = new uint256[](tickets.length);
-        for (uint256 i = 0; i < drawIds.length; ++i) {
-            ticketIds[i] = registerTicket(drawIds[i], tickets[i], frontend, referrer);
-        }
-        frontendDueTicketSales[frontend] += tickets.length;
-        rewardToken.safeTransferFrom(msg.sender, address(this), ticketPrice * tickets.length);
+        ticketIds = buyTicketsAsDelegate(msg.sender, drawIds, tickets, frontend, referrer);
     }
 
     function executeDraw() external override whenNotExecutingDraw {
@@ -171,12 +163,8 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
         }
     }
 
-    function claimWinningTickets(uint256[] calldata ticketIds) external override returns (uint256 claimedAmount) {
-        uint256 totalTickets = ticketIds.length;
-        for (uint256 i = 0; i < totalTickets; ++i) {
-            claimedAmount += claimWinningTicket(ticketIds[i]);
-        }
-        rewardToken.safeTransfer(msg.sender, claimedAmount);
+    function claimWinningTickets(uint256[] calldata ticketIds) public override returns (uint256 claimedAmount) {
+        claimedAmount = claimWinningTicketsAsDelegate(msg.sender, ticketIds);
     }
 
     function rescueTokens(IERC20 token, address to, uint256 amount) external onlyOwner {
@@ -246,6 +234,41 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
 
     function currentRewardSize(uint8 winTier) public view override returns (uint256 rewardSize) {
         return drawRewardSize(currentDraw, winTier);
+    }
+
+    function buyTicketsAsDelegate(
+        address payer,
+        uint128[] calldata drawIds,
+        uint120[] calldata tickets,
+        address frontend,
+        address referrer
+    )
+        internal
+        returns (uint256[] memory ticketIds)
+    {
+        if (drawIds.length != tickets.length) {
+            revert DrawsAndTicketsLenMismatch(drawIds.length, tickets.length);
+        }
+        ticketIds = new uint256[](tickets.length);
+        for (uint256 i = 0; i < drawIds.length; ++i) {
+            ticketIds[i] = registerTicket(drawIds[i], tickets[i], frontend, referrer);
+        }
+        frontendDueTicketSales[frontend] += tickets.length;
+        rewardToken.safeTransferFrom(payer, address(this), ticketPrice * tickets.length);
+    }
+
+    function claimWinningTicketsAsDelegate(
+        address delegate,
+        uint256[] calldata ticketIds
+    )
+        internal
+        returns (uint256 claimedAmount)
+    {
+        uint256 totalTickets = ticketIds.length;
+        for (uint256 i = 0; i < totalTickets; ++i) {
+            claimedAmount += claimWinningTicket(ticketIds[i]);
+        }
+        rewardToken.safeTransfer(delegate, claimedAmount);
     }
 
     function drawRewardSize(uint128 drawId, uint8 winTier) private view returns (uint256 rewardSize) {
