@@ -6,7 +6,7 @@ import "../src/Lottery.sol";
 import "./TestToken.sol";
 import "./RNSource.sol";
 
-contract LotteryInvariantChecksTest is LotteryTestBase {
+contract LotteryInvariantChecksTest is LotteryTestBaseERC20 {
     function invariantSufficientFunds() public view {
         uint256 contractBalance = lottery.rewardToken().balanceOf(address(lottery));
         assert(contractBalance > 0);
@@ -27,7 +27,7 @@ contract LotteryInvariantChecksTest is LotteryTestBase {
             address userAddress =
                 address(uint160(bound(uint256(uint160(users[i % users.length])), 1, uint256(type(uint160).max))));
             vm.startPrank(userAddress);
-            rewardToken.mint(TICKET_PRICE);
+            ITestToken(address(rewardToken)).mint(TICKET_PRICE);
             rewardToken.approve(address(lottery), TICKET_PRICE);
             buyTicket(
                 lottery.currentDraw(),

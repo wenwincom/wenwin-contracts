@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "forge-std/Script.sol";
 import "src/interfaces/IRNSourceController.sol";
 import "src/Lottery.sol";
+import "src/LotteryNativeToken.sol";
 
 contract LotteryConfig is Script {
     using Strings for uint8;
@@ -14,6 +15,30 @@ contract LotteryConfig is Script {
         uint8 selectionSize = uint8(vm.envUint("LOTTERY_SELECTION_SIZE"));
 
         lottery = new Lottery(
+            LotterySetupParams(
+                rewardToken,
+                LotteryDrawSchedule(
+                    vm.envUint("LOTTERY_FIRST_DRAW_AT"),
+                    vm.envUint("LOTTERY_DRAW_PERIOD"),
+                    vm.envUint("LOTTERY_DRAW_COOL_DOWN_PERIOD")
+                ),
+                vm.envUint("LOTTERY_TICKET_PRICE"),
+                selectionSize,
+                uint8(vm.envUint("LOTTERY_SELECTION_MAX")),
+                uint256(vm.envUint("LOTTERY_EXPECTED_PAYOUT")),
+                getFixedRewards(selectionSize),
+                vm.envUint("LOTTERY_INITIAL_POT")
+            ),
+            vm.envAddress("TREASURY_ADDRESS"),
+            vm.envUint("SOURCE_MAX_REQUEST_DELAY"),
+            vm.envString("LOTTERY_TOKEN_BASE_URI")
+        );
+    }
+
+    function getLotteryNativeToken(IERC20 rewardToken) internal returns (LotteryNativeToken lottery) {
+        uint8 selectionSize = uint8(vm.envUint("LOTTERY_SELECTION_SIZE"));
+
+        lottery = new LotteryNativeToken(
             LotterySetupParams(
                 rewardToken,
                 LotteryDrawSchedule(

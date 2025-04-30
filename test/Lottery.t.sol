@@ -6,7 +6,7 @@ import "../src/Lottery.sol";
 import "./TestToken.sol";
 import "test/TestHelpers.sol";
 
-contract LotteryTest is LotteryTestBase {
+contract LotteryTest is LotteryTestBaseERC20 {
     address public constant USER = address(123);
 
     function testFinalizeInitialPot(uint256 initialSize) public {
@@ -14,7 +14,7 @@ contract LotteryTest is LotteryTestBase {
         uint256 tokenUnit = 10 ** rewardToken.decimals();
         initialSize = bound(initialSize, 0, 6_660_000 * tokenUnit);
         vm.startPrank(address(987_651_234));
-        rewardToken.mint(initialSize);
+        ITestToken(address(rewardToken)).mint(initialSize);
         address predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, initialSize);
         if (initialSize < 4 * tokenUnit) {
@@ -42,7 +42,7 @@ contract LotteryTest is LotteryTestBase {
         uint128 currentDraw = lottery.currentDraw();
 
         vm.startPrank(USER);
-        rewardToken.mint(TICKET_PRICE);
+        ITestToken(address(rewardToken)).mint(TICKET_PRICE);
         rewardToken.approve(address(lottery), TICKET_PRICE);
 
         vm.expectRevert(InvalidTicket.selector);
@@ -61,11 +61,13 @@ contract LotteryTest is LotteryTestBase {
         uint256 initialBalance = rewardToken.balanceOf(address(lottery));
 
         vm.startPrank(USER);
-        rewardToken.mint(5 ether);
+        ITestToken(address(rewardToken)).mint(5 ether);
         rewardToken.approve(address(lottery), 10 ether);
-        buyTicket(currentDraw, uint120(0x0F), address(0));
+        uint256 ticketId = buyTicket(currentDraw, uint120(0x0F), address(0));
 
         assertEq(rewardToken.balanceOf(address(lottery)), initialBalance + TICKET_PRICE);
+        assertEq(lottery.ownerOf(ticketId), USER);
+        assertEq(lottery.balanceOf(USER), 1);
 
         vm.expectRevert(bytes("ERC20: transfer amount exceeds balance"));
         buyTicket(currentDraw, uint120(0x0F), address(0));
@@ -80,7 +82,7 @@ contract LotteryTest is LotteryTestBase {
         vm.prank(randomNumberSource);
         lottery.onRandomNumberFulfilled(randomNumber);
 
-        rewardToken.mint(5 ether);
+        ITestToken(address(rewardToken)).mint(5 ether);
         rewardToken.approve(address(lottery), 5 ether);
         vm.expectRevert(abi.encodeWithSelector(TicketRegistrationClosed.selector, currentDraw));
         buyTicket(currentDraw, uint120(0x0F), address(0));
@@ -88,7 +90,7 @@ contract LotteryTest is LotteryTestBase {
 
     function testBuyMultipleTickets() public {
         vm.startPrank(USER);
-        rewardToken.mint(TICKET_PRICE * 2);
+        ITestToken(address(rewardToken)).mint(TICKET_PRICE * 2);
         rewardToken.approve(address(lottery), TICKET_PRICE * 2);
         uint128[] memory drawIds = new uint128[](2);
         uint120[] memory tickets = new uint120[](3);
@@ -108,7 +110,7 @@ contract LotteryTest is LotteryTestBase {
 
     function testClaimFees() public {
         vm.startPrank(USER);
-        rewardToken.mint(TICKET_PRICE);
+        ITestToken(address(rewardToken)).mint(TICKET_PRICE);
         rewardToken.approve(address(lottery), TICKET_PRICE);
         buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
         vm.stopPrank();
@@ -132,7 +134,7 @@ contract LotteryTest is LotteryTestBase {
 
     function testChangeFeeRecipient() public {
         vm.startPrank(USER);
-        rewardToken.mint(TICKET_PRICE);
+        ITestToken(address(rewardToken)).mint(TICKET_PRICE);
         rewardToken.approve(address(lottery), TICKET_PRICE);
         buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
         vm.stopPrank();
@@ -158,7 +160,7 @@ contract LotteryTest is LotteryTestBase {
 
     function testExecuteDraw() public {
         vm.startPrank(USER);
-        rewardToken.mint(TICKET_PRICE);
+        ITestToken(address(rewardToken)).mint(TICKET_PRICE);
         rewardToken.approve(address(lottery), TICKET_PRICE);
         uint256 nonWinningTicketId = buyTicket(lottery.currentDraw(), uint120(0xF0), address(0));
         vm.stopPrank();
@@ -183,7 +185,7 @@ contract LotteryTest is LotteryTestBase {
 
         uint128 drawId = lottery.currentDraw();
         vm.startPrank(USER);
-        rewardToken.mint(TICKET_PRICE);
+        ITestToken(address(rewardToken)).mint(TICKET_PRICE);
         rewardToken.approve(address(lottery), TICKET_PRICE);
         uint256 ticketId = buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
         vm.stopPrank();
@@ -264,7 +266,7 @@ contract LotteryTest is LotteryTestBase {
         uint256 claimable1;
         uint128 drawId = lottery.currentDraw();
         vm.startPrank(USER);
-        rewardToken.mint(TICKET_PRICE * 2);
+        ITestToken(address(rewardToken)).mint(TICKET_PRICE * 2);
         rewardToken.approve(address(lottery), TICKET_PRICE * 2);
         uint256 ticketId = buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
         uint256 ticketId1 = buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
@@ -307,7 +309,7 @@ contract LotteryTest is LotteryTestBase {
 
         // buy some tickets
         vm.startPrank(USER);
-        rewardToken.mint(TICKET_PRICE * 2);
+        ITestToken(address(rewardToken)).mint(TICKET_PRICE * 2);
         rewardToken.approve(address(lottery), TICKET_PRICE * 2);
         buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
         buyTicket(lottery.currentDraw(), uint120(0x0F), address(0));
@@ -335,7 +337,7 @@ contract LotteryTest is LotteryTestBase {
         uint256 drawPeriodPacked = (3 days << 32) + 2 days;
         LotteryDrawSchedule memory drawSchedule =
             LotteryDrawSchedule(block.timestamp + 4 days, drawPeriodPacked, 30 minutes);
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         address predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         Lottery multiDraws = new Lottery(
@@ -402,7 +404,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         address predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(DrawPeriodInvalidSetup.selector);
@@ -422,7 +424,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(DrawPeriodInvalidSetup.selector);
@@ -444,7 +446,7 @@ contract LotteryTest is LotteryTestBase {
 
         uint256 oldTimestamp = block.timestamp;
         vm.warp(drawSchedule.firstDrawScheduledAt);
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(DrawPeriodInvalidSetup.selector);
@@ -465,7 +467,7 @@ contract LotteryTest is LotteryTestBase {
         );
         vm.warp(oldTimestamp);
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(TicketPriceZero.selector);
@@ -478,7 +480,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(SelectionSizeZero.selector);
@@ -491,7 +493,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(SelectionSizeMaxTooBig.selector);
@@ -502,7 +504,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(SelectionSizeTooBig.selector);
@@ -513,7 +515,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(SelectionSizeTooBig.selector);
@@ -533,7 +535,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(InvalidExpectedPayout.selector);
@@ -553,7 +555,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(InvalidExpectedPayout.selector);
@@ -564,7 +566,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(InvalidExpectedPayout.selector);
@@ -577,7 +579,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         vm.expectRevert(InvalidFixedRewardSetup.selector);
@@ -597,7 +599,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         uint256[] memory invalidFixedRewards = new uint256[](SELECTION_SIZE);
@@ -619,7 +621,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         invalidFixedRewards[SELECTION_SIZE - 1] = 0;
@@ -641,7 +643,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         invalidFixedRewards[0] = 0;
@@ -665,7 +667,7 @@ contract LotteryTest is LotteryTestBase {
             ""
         );
 
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         invalidFixedRewards[0] = 0;
@@ -698,7 +700,7 @@ contract LotteryTest is LotteryTestBase {
 
         uint256 tokenUnit = 10 ** rewardToken.decimals();
         vm.startPrank(address(987_651_234));
-        rewardToken.mint(5e18);
+        ITestToken(address(rewardToken)).mint(5e18);
         address predictedAddress = computeCreateAddress(address(987_651_234), vm.getNonce(address(987_651_234)));
         rewardToken.approve(predictedAddress, 5e18);
         uint256[] memory validMaxFixedRewards = new uint256[](SELECTION_SIZE);
@@ -729,7 +731,7 @@ contract LotteryTest is LotteryTestBase {
 
     function testSetBaseURI() public {
         vm.startPrank(USER);
-        rewardToken.mint(TICKET_PRICE);
+        ITestToken(address(rewardToken)).mint(TICKET_PRICE);
         rewardToken.approve(address(lottery), TICKET_PRICE);
         buyTicket(0, uint120(0x0F), address(0));
         vm.stopPrank();
@@ -768,7 +770,7 @@ contract LotteryTest is LotteryTestBase {
 
     function initTickets(uint128 drawId, uint120 numbers) private returns (uint256 ticketId) {
         vm.startPrank(USER);
-        rewardToken.mint(TICKET_PRICE);
+        ITestToken(address(rewardToken)).mint(TICKET_PRICE);
         rewardToken.approve(address(lottery), TICKET_PRICE);
         ticketId = buyTicket(drawId, numbers, address(0));
         // buy the same tickets to increase nonJackpot count

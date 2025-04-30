@@ -8,7 +8,7 @@ import "../src/LotteryToken.sol";
 import "../src/staking/Staking.sol";
 import "./TestToken.sol";
 
-contract StakingTest is LotteryTestBase {
+contract StakingTest is LotteryTestBaseERC20 {
     IStaking public staking;
     address public constant STAKER = address(69);
     address public constant OWNER = address(70);
