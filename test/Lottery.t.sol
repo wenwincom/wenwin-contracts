@@ -230,7 +230,7 @@ contract LotteryTest is LotteryTestBaseERC20 {
         uint256 claimable;
 
         finalizeDraw(0x01020304);
-        for (uint256 i = drawId + 1; i <= drawId + LotteryMath.DRAWS_PER_YEAR; ++i) {
+        for (uint256 i = drawId + 1; i <= drawId + LotteryMath.CLAIMABLE_PERIOD; ++i) {
             (claimable,) = lottery.claimable(ticketId);
             assertGt(claimable, 0);
             finalizeDraw(i * 0x04003001);
@@ -274,7 +274,7 @@ contract LotteryTest is LotteryTestBaseERC20 {
 
         finalizeDraw(0x00000000);
 
-        for (uint256 i = drawId + 1; i <= drawId + LotteryMath.DRAWS_PER_YEAR; ++i) {
+        for (uint256 i = drawId + 1; i <= drawId + LotteryMath.CLAIMABLE_PERIOD; ++i) {
             (claimable,) = lottery.claimable(ticketId);
             (claimable1,) = lottery.claimable(ticketId1);
             assertGt(claimable, 0);
@@ -302,8 +302,8 @@ contract LotteryTest is LotteryTestBaseERC20 {
         lottery.rescueTokens(token, USER, 10);
         assertEq(token.balanceOf(USER), 10);
 
-        vm.expectRevert(abi.encodeWithSelector(AmountToRescueTooBig.selector, rewardToken, 1, 0));
-        lottery.rescueTokens(rewardToken, USER, 1);
+        vm.expectRevert(abi.encodeWithSelector(AmountToRescueTooBig.selector, token, 1, 0));
+        lottery.rescueTokens(token, USER, 1);
 
         vm.stopPrank();
 
@@ -317,7 +317,7 @@ contract LotteryTest is LotteryTestBaseERC20 {
 
         uint128 drawId = lottery.currentDraw();
 
-        for (uint256 i = drawId + 1; i <= drawId + LotteryMath.DRAWS_PER_YEAR; ++i) {
+        for (uint256 i = drawId + 1; i <= drawId + LotteryMath.RESCUE_FUNDS_PERIOD; ++i) {
             finalizeDraw(i * 0x04003001);
         }
 
