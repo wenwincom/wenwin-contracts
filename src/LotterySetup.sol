@@ -91,8 +91,8 @@ contract LotterySetup is ILotterySetup {
             revert InsufficientInitialPot(lotterySetupParams.initialPot);
         }
 
-        jackpotBound = 2_000_000 * tokenUnit;
-        maxPot = 6_660_000 * tokenUnit;
+        jackpotBound = 5000 * tokenUnit;
+        maxPot = 10_000 * tokenUnit;
         rewardToken = lotterySetupParams.token;
         firstDrawSchedule = lotterySetupParams.drawSchedule.firstDrawScheduledAt;
         drawPeriod = lotterySetupParams.drawSchedule.drawPeriod;

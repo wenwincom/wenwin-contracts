@@ -19,7 +19,7 @@ contract LotteryMathTest is Test {
         uint256 reward =
             LotteryMath.calculateReward(profit, fixedJackpotSize, fixedJackpotSize, ticketsSold, true, expectedPayout);
         assertGe(reward, fixedJackpotSize);
-        assertEq(reward, fixedJackpotSize + excess / 2);
+        assertEq(reward, fixedJackpotSize + excess / 4);
     }
 
     function testCalculateNonJackpotReward(
@@ -62,7 +62,7 @@ contract LotteryMathTest is Test {
             assertGe(multi, PercentageMath.PERCENTAGE_BASE);
             uint256 totalExpectedPayout = ticketsSold * expectedPayout;
             uint256 multiCalc =
-                PercentageMath.PERCENTAGE_BASE + (excessPot / 2) * PercentageMath.PERCENTAGE_BASE / totalExpectedPayout;
+                PercentageMath.PERCENTAGE_BASE + (excessPot / 4) * PercentageMath.PERCENTAGE_BASE / totalExpectedPayout;
             assertEq(multiCalc, multi);
         }
     }
@@ -74,7 +74,7 @@ contract LotteryMathTest is Test {
         if (profit <= 0) {
             assertEq(excess, 0);
         } else {
-            uint256 excessCalc = uint256(profit) * 67 / 100;
+            uint256 excessCalc = uint256(profit) * 5 / 100;
             if (excessCalc <= fixedJackpotSize) {
                 assertEq(excess, 0);
             } else {

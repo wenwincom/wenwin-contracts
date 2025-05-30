@@ -17,11 +17,15 @@ library LotteryMath {
     /// @dev Percentage of the ticket price that goes to the pot
     uint256 public constant TICKET_PRICE_TO_POT = PercentageMath.PERCENTAGE_BASE - STANDARD_FEE - FRONTEND_FEE;
     /// @dev safety margin used to calculate excess pot, in percentage
-    uint256 public constant SAFETY_MARGIN = 67 * PercentageMath.ONE_PERCENT;
+    uint256 public constant SAFETY_MARGIN = 5 * PercentageMath.ONE_PERCENT;
     /// @dev Percentage of excess pot reserved for bonus
-    uint256 public constant EXCESS_BONUS_ALLOCATION = 50 * PercentageMath.ONE_PERCENT;
+    uint256 public constant EXCESS_BONUS_ALLOCATION = 25 * PercentageMath.ONE_PERCENT;
     /// @dev Number of lottery draws per year
     uint128 public constant DRAWS_PER_YEAR = 1460; //365 * 4
+    /// @dev Claimable period
+    uint128 public constant CLAIMABLE_PERIOD = DRAWS_PER_YEAR / 12; // One month
+    /// @dev Rescue funds period
+    uint128 public constant RESCUE_FUNDS_PERIOD = DRAWS_PER_YEAR / 4; // Three month
 
     /// @dev Calculates new cumulative net profit and excess pot
     /// To be called when the draw is finalized

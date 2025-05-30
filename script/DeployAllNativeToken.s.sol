@@ -6,9 +6,8 @@ import "forge-std/Script.sol";
 import "script/config/LotteryConfig.sol";
 import "script/config/RewardTokenConfig.sol";
 import "script/config/RNSourceConfig.sol";
-import { WenWinUSDC } from "../src/mocks/WenWinUSDC.sol";
 
-contract DeployAllScript is Script, LotteryConfig, RewardTokenConfig, RNSourceConfig {
+contract DeployAllNativeTokenScript is Script, LotteryConfig, RewardTokenConfig, RNSourceConfig {
     // solhint-disable-next-line no-empty-blocks
     function setUp() public { }
 

@@ -157,7 +157,7 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
         if (_ownerOf(ticketId) != address(0)) {
             uint120 _winningTicket = winningTicket[ticketInfo.drawId];
             winTier = TicketUtils.ticketWinTier(ticketInfo.combination, _winningTicket, selectionSize, selectionMax);
-            if (block.timestamp < ticketRegistrationDeadline(ticketInfo.drawId + LotteryMath.DRAWS_PER_YEAR)) {
+            if (block.timestamp < ticketRegistrationDeadline(ticketInfo.drawId + LotteryMath.CLAIMABLE_PERIOD)) {
                 claimableAmount = winAmount[ticketInfo.drawId][winTier];
             }
         }
@@ -169,7 +169,7 @@ contract Lottery is ILottery, Ticket, LotterySetup, RNSourceController {
 
     function rescueTokens(IERC20 token, address to, uint256 amount) external onlyOwner {
         uint256 maxToWithdraw = token.balanceOf(address(this));
-        if (token == rewardToken && currentDraw < LotteryMath.DRAWS_PER_YEAR) {
+        if (token == rewardToken && currentDraw < LotteryMath.RESCUE_FUNDS_PERIOD) {
             maxToWithdraw = maxToWithdraw > maxPot ? (maxToWithdraw - maxPot) : 0;
         }
 

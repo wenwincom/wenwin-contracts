@@ -1,0 +1,1 @@
+forge verify-contract --rpc-url https://testnet-rpc.monad.xyz --verifier sourcify --verifier-url 'https://sourcify-api-monad.blockvision.org' 0xdaf5ce515f3b357d353e485d85898c0ee3d1c3e2 src/LotteryNativeToken.sol:LotteryNativeToken
